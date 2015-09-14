@@ -14,6 +14,7 @@
 #include "results-application.h"
 #include "ontology-application.h"
 #include "position-application.h"
+#include "schedule-application.h"
 #include "neighborhood-application.h"
 
 Stratos::Stratos(int argc, char *argv[]) {
@@ -32,26 +33,22 @@ Stratos::Stratos(int argc, char *argv[]) {
 }
 
 void Stratos::Run() {
-	//std::cout << "Starting simulation for " << TOTAL_SIMULATION_TIME << " seconds ...\n";
-	//std::cout << "Testing for " << NUMBER_OF_REQUESTER_NODES << " requester nodes.\n";
-	//std::cout << "Each node offers " << NUMBER_OF_SERVICES_OFFERED << " services.\n";
-	//std::cout << "A service sends " << NUMBER_OF_PACKETS_TO_SEND << " packages.\n\n";
 	std::map<int, int> nodos;
 	for(; nodos.size() < (uint) NUMBER_OF_REQUESTER_NODES;) {
 		int nodo = Utilities::Random(0, TOTAL_NUMBER_OF_NODES - 1);
 		nodos[nodo] = nodo;
 	}
-	Ptr<ResultsApplication> app;
 	Ptr<SearchApplication> searchApp;
-	Ptr<ResultsApplication> requester;
+	Ptr<ResultsApplication> resultsApp;
+	Ptr<ResultsApplication> requesterResultsApp;
 	for(std::map<int, int>::iterator i = nodos.begin(); i != nodos.end(); i++) {
 		double requestTime = Utilities::Random(2, MAX_REQUEST_TIME);
 		searchApp = DynamicCast<SearchApplication>(wifiNodes.Get(i->first)->GetApplication(3));
-		requester = DynamicCast<ResultsApplication>(wifiNodes.Get(i->first)->GetApplication(6));
+		requesterResultsApp = DynamicCast<ResultsApplication>(wifiNodes.Get(i->first)->GetApplication(7));
 		Simulator::Schedule(Seconds(requestTime), &SearchApplication::CreateAndSendRequest, searchApp);
 		for(int j = 0; j < TOTAL_NUMBER_OF_NODES; j++) {
-			app = DynamicCast<ResultsApplication>(wifiNodes.Get(j)->GetApplication(6));
-			Simulator::Schedule(Seconds(requestTime), &ResultsApplication::EvaluateNode, app, requester);
+			resultsApp = DynamicCast<ResultsApplication>(wifiNodes.Get(j)->GetApplication(7));
+			Simulator::Schedule(Seconds(requestTime), &ResultsApplication::EvaluateNode, resultsApp, requesterResultsApp);
 		}
 	}
 	Ptr<FlowMonitor> flowMonitor;
@@ -76,7 +73,6 @@ void Stratos::CreateNodes() {
 }
 
 void Stratos::CreateDevices() {
-	//std::cout << "Creating " << TOTAL_NUMBER_OF_NODES << " devices.\n";
 	YansWifiChannelHelper wifiChannel = YansWifiChannelHelper::Default();
 	YansWifiPhyHelper wifiPhy = YansWifiPhyHelper::Default();
 	wifiPhy.SetChannel(wifiChannel.Create());
@@ -87,7 +83,6 @@ void Stratos::CreateDevices() {
 }
 
 void Stratos::InstallInternetStack() {
-	//std::cout << "Installing the Internet Stack to nodes.\n";
 	InternetStackHelper internetStack;
 	internetStack.Install(wifiNodes);
 	Ipv4AddressHelper addressHelper;
@@ -96,7 +91,6 @@ void Stratos::InstallInternetStack() {
 }
 
 void Stratos::InstallApplications() {
-	//std::cout << "Installing Applications to nodes.\n";
 	ApplicationContainer applications;
 	NeighborhoodHelper neigboors;
 	applications.Add(neigboors.Install(wifiNodes));
@@ -112,14 +106,16 @@ void Stratos::InstallApplications() {
 	ServiceHelper service;
 	service.SetAttribute("nPackets", IntegerValue(NUMBER_OF_PACKETS_TO_SEND));
 	applications.Add(service.Install(wifiNodes));
+	ScheduleHelper schedule;
+	applications.Add(schedule.Install(wifiNodes));
 	ResultsHelper results;
 	applications.Add(results.Install(wifiNodes));
 	applications.Start(Seconds(1));
 	applications.Stop(Seconds(TOTAL_SIMULATION_TIME - 1));
+
 }
 
 void Stratos::CreateMobileNodes() {
-	//std::cout << "Creating " << NUMBER_OF_MOBILE_NODES << " mobile nodes.\n";
 	mobileNodes.Create(NUMBER_OF_MOBILE_NODES);
 	for(int i = 0; i < NUMBER_OF_MOBILE_NODES; ++i) {
 		std::ostringstream name;
@@ -137,9 +133,9 @@ void Stratos::CreateMobileNodes() {
 }
 
 void Stratos::CreateStaticNodes() {
-	//std::cout << "Creating " << (TOTAL_NUMBER_OF_NODES - NUMBER_OF_MOBILE_NODES) << " static nodes.\n";
-	staticNodes.Create(TOTAL_NUMBER_OF_NODES - NUMBER_OF_MOBILE_NODES);
-	for(int i = 0; i < (TOTAL_NUMBER_OF_NODES - NUMBER_OF_MOBILE_NODES); ++i) {
+	int nStaticNodes = TOTAL_NUMBER_OF_NODES - NUMBER_OF_MOBILE_NODES;
+	staticNodes.Create(nStaticNodes);
+	for(int i = 0; i < (nStaticNodes); ++i) {
 		std::ostringstream name;
 		name << "Static Node - " << i;
 		Names::Add(name.str(), staticNodes.Get(i));

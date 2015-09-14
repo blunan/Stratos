@@ -1,0 +1,59 @@
+#!/bin/bash
+
+if [ -d ~/Desktop/ns-3 ]
+then
+	cd ~/Desktop/ns-3
+else
+	cd ~/ns-3
+fi
+
+indexes[0]="0 25 50 100"
+indexes[1]="1 2 4 8 16 24 32"
+indexes[2]="1 2 4 8"
+indexes[3]="10 20 40 60"
+
+ReadAndExport() {	
+	i=0
+	j=0
+	k=0
+	file=$1
+	simulations=0
+	while read line
+	do
+		if [ -z "$line" ]
+		then
+			declare -a index=(${indexes[k]})
+			for j in {0..4}
+			do
+				for i in ${!values[*]}
+				do
+					
+					declare -a value=(${values[i]})
+					declare -a deviation=(${deviations[i]})
+					echo "(${index[i]}, ${value[j]}) +- (0, ${deviation[j]})"
+				done
+				echo ""
+			done
+			echo ""
+			let "i = 0"
+			let "j = 0"
+			let "k += 1"
+			let "simulations = 0"
+			unset values
+			unset deviations
+		else
+			IFS='|' read -a rawValues <<< "$line"
+			if [ $((simulations%2)) -eq 0 ]
+			then
+				deviations[$i]="${rawValues[@]}"
+				let "i += 1"
+			else
+				values[$j]="${rawValues[@]}"
+				let "j += 1"
+			fi
+			let "simulations += 1"
+		fi
+	done < "$file"
+}
+
+ReadAndExport stratos/statics.txt > stratos/statics.tex

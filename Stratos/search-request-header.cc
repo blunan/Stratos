@@ -58,7 +58,7 @@ void SearchRequestHeader::Serialize(Buffer::Iterator serializer) const {
 }
 
 SearchRequestHeader::SearchRequestHeader() {
-	currentHops = 1;
+	currentHops = 0;
 	maxHopsAllowed = 0;
 	requestPosition.x = 0;
 	requestPosition.y = 0;

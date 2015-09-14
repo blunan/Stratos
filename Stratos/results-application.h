@@ -39,7 +39,7 @@ class ResultsApplication : public Application {
 		POSITION requestPosition;
 		std::string requestService;
 		int responseSemanticDistance;
-		std::list<double> packetsTime;
+		std::list<double> packetsTimes;
 		std::map<uint, int> semanticDistances;
 		Ptr<PositionApplication> positionManager;
 		Ptr<OntologyApplication> ontologyManager;

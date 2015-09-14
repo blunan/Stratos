@@ -42,9 +42,9 @@ void ResultsApplication::StopApplication() {
 	if(active) {
 		int exito = 1;
 		double tiempo = -1;
-		int paquetes = packetsTime.size();
+		int paquetes = packetsTimes.size();
 		if(paquetes > 0) {
-			tiempo = packetsTime.front() - requestTime;
+			tiempo = packetsTimes.front() - requestTime;
 		}
 		for(std::map<uint, int>::iterator i = semanticDistances.begin(); i != semanticDistances.end(); i++) {
 			if(i->second < responseSemanticDistance) {
@@ -62,7 +62,7 @@ void ResultsApplication::Activate() {
 
 void ResultsApplication::AddPacket(double receiveTime) {
 	pthread_mutex_lock(&mutex);
-	packetsTime.push_back(receiveTime);
+	packetsTimes.push_back(receiveTime);
 	pthread_mutex_unlock(&mutex);
 }
 
@@ -85,8 +85,7 @@ void ResultsApplication::SetRequestService(std::string requestService) {
 void ResultsApplication::EvaluateNode(Ptr<ResultsApplication> requester) {
 	POSITION position = positionManager->GetCurrentPosition();
 	std::list<std::string> services = ontologyManager->GetOfferedServices();
-	uint address = GetNode()->GetObject<Ipv4>()->GetAddress(1, 0).GetLocal().Get();
-	requester->Evaluate(address, position, services);
+	requester->Evaluate(localAddress, position, services);
 }
 
 void ResultsApplication::SetResponseSemanticDistance(int responseSemanticDistance) {
@@ -98,11 +97,11 @@ void ResultsApplication::Evaluate(uint nodeAddress, POSITION nodePosition, std::
 	if(localAddress == nodeAddress) {
 		return;
 	}
-	double distance = positionManager->CalculateDistanceFromTo(nodePosition, requestPosition);
+	double distance = PositionApplication::CalculateDistanceFromTo(nodePosition, requestPosition);
 	if(distance > requestDistance) {
 		return;
 	}
-	OFFERED_SERVICE service = ontologyManager->GetBestOfferedService(requestService, nodeServices);
+	OFFERED_SERVICE service = OntologyApplication::GetBestOfferedService(requestService, nodeServices);
 	semanticDistances[nodeAddress] = service.semanticDistance;
 }
 

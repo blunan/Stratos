@@ -13,6 +13,7 @@
 #include "results-application.h"
 #include "position-application.h"
 #include "ontology-application.h"
+#include "schedule-application.h"
 #include "search-request-header.h"
 #include "search-response-header.h"
 #include "neighborhood-application.h"
@@ -36,6 +37,8 @@ class SearchApplication : public Application {
 		virtual void StopApplication();
 
 	public:
+		static SearchResponseHeader SelectBestResponse(std::list<SearchResponseHeader> responses);
+
 		void CreateAndSendRequest();
 
 	private:
@@ -52,6 +55,7 @@ class SearchApplication : public Application {
 		Ptr<ServiceApplication> serviceManager;
 		Ptr<PositionApplication> positionManager;
 		Ptr<OntologyApplication> ontologyManager;
+		Ptr<ScheduleApplication> scheduleManager;
 		Ptr<NeighborhoodApplication> neighborhoodManager;
 		
 		void ReceiveMessage(Ptr<Socket> socket);
@@ -74,12 +78,11 @@ class SearchApplication : public Application {
 		void SaveResponse(SearchResponseHeader response);
 		void VerifyResponses(std::pair<uint, double> request);
 		void CreateAndSaveResponse(SearchRequestHeader request);
-		void SelectAndSendBestResponse(std::pair<uint, double> request);
 		void ReceiveResponse(Ptr<Packet> packet, uint senderAddress);
+		void SelectAndSendBestResponse(std::pair<uint, double> request);
 		SearchResponseHeader CreateResponse(SearchRequestHeader request);
 		std::pair<uint, double> GetRequestKey(SearchResponseHeader response);
 		void SendResponse(SearchResponseHeader responseHeader, uint parent);
-		SearchResponseHeader SelectBestResponse(std::list<SearchResponseHeader> responses);
 };
 
 class SearchHelper : public ApplicationHelper {

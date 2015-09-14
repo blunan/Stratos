@@ -23,7 +23,6 @@ RouteApplication::~RouteApplication() {
 void RouteApplication::DoDispose() {
 	pthread_mutex_destroy(&mutex);
 	Application::DoDispose();
-	
 }
 
 void RouteApplication::StartApplication() {

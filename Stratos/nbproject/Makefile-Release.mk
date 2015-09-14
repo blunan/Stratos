@@ -42,6 +42,7 @@ OBJECTFILES= \
 	${OBJECTDIR}/position-application.o \
 	${OBJECTDIR}/results-application.o \
 	${OBJECTDIR}/route-application.o \
+	${OBJECTDIR}/schedule-application.o \
 	${OBJECTDIR}/search-application.o \
 	${OBJECTDIR}/search-error-header.o \
 	${OBJECTDIR}/search-request-header.o \
@@ -112,6 +113,11 @@ ${OBJECTDIR}/route-application.o: route-application.cc
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} "$@.d"
 	$(COMPILE.cc) -O2 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/route-application.o route-application.cc
+
+${OBJECTDIR}/schedule-application.o: schedule-application.cc 
+	${MKDIR} -p ${OBJECTDIR}
+	${RM} "$@.d"
+	$(COMPILE.cc) -O2 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/schedule-application.o schedule-application.cc
 
 ${OBJECTDIR}/search-application.o: search-application.cc 
 	${MKDIR} -p ${OBJECTDIR}

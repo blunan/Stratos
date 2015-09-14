@@ -34,16 +34,16 @@ void PositionApplication::StartApplication() {
 void PositionApplication::StopApplication() {
 }
 
+double PositionApplication::CalculateDistanceFromTo(POSITION from, POSITION to){
+	return sqrt(pow(to.x - from.x, 2) + pow(to.y - from.y, 2));
+}
+
 POSITION PositionApplication::GetCurrentPosition() {
 	Vector rawPosition = mobility->GetPosition();
 	POSITION position;
 	position.x = rawPosition.x;
 	position.y = rawPosition.y;
 	return position;
-}
-
-double PositionApplication::CalculateDistanceFromTo(POSITION from, POSITION to){
-	return sqrt(pow(to.x - from.x, 2) + pow(to.y - from.y, 2));
 }
 
 PositionHelper::PositionHelper() {

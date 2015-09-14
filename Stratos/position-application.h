@@ -28,8 +28,9 @@ class PositionApplication : public Application {
 		Ptr<MobilityModel> mobility;
 
 	public:
+		static double CalculateDistanceFromTo(POSITION from, POSITION to);
+
 		POSITION GetCurrentPosition();
-		double CalculateDistanceFromTo(POSITION from, POSITION to);
 };
 
 class PositionHelper : public ApplicationHelper {
