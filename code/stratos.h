@@ -1,6 +1,7 @@
 #ifndef STRATOS_H
 #define STRATOS_H
 
+#include "log4cxx/logger.h"
 #include "ns3/network-module.h"
 #include "ns3/mobility-module.h"
 
@@ -18,6 +19,8 @@ class Stratos {
 		int NUMBER_OF_PACKETS_TO_SEND;
 		int NUMBER_OF_REQUESTER_NODES;
 		int NUMBER_OF_SERVICES_OFFERED;
+                
+                static const log4cxx::LoggerPtr LOGGER(getRootLogger());
 
 	public:
 		Stratos(int argc, char *argv[]);
