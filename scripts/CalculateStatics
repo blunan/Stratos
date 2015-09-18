@@ -1,0 +1,178 @@
+#!/bin/bash
+
+if [ -d ~/Desktop/ns-3 ]
+then
+	cd ~/Desktop/ns-3
+else
+	cd ~/ns-3
+fi
+
+CalculateDeviations() {
+	file=$1
+	nLines=0
+	nFound=0
+	nTimes=0
+	timesSum=0
+	nSuccess=0
+	avgTimes=0
+	nPackets=$2
+	packetsSum=0
+	simulations=0
+	nRequesters=$3
+	timeDeviation=0
+	foundDeviation=0
+	successDeviation=0
+	packetsDeviation=0
+	avgControlOverhead=0
+	avgFoundPercentage=0
+	avgSuccessPercentage=0
+	avgPacketsPercentage=0
+	controlOverheadDeviation=0
+	while read line
+	do
+		let "nLines += 1"
+		if [ $(($nLines%$nRequesters)) -eq 0 ]
+		then
+			let "simulations += 1"
+			if [ $nTimes -gt 0 ]
+			then
+				avgTimes=$(echo "$timesSum / $nTimes" | bc)
+				avgPacketsPercentage=$(echo "($packetsSum * 100) / ($nPackets * $nTimes)" | bc)
+				timeDeviation=$(echo "$timeDeviation + (($avgTimes - $4) ^ 2)" | bc)
+				packetsDeviation=$(echo "$packetsDeviation + (($avgPacketsPercentage - $7) ^ 2)" | bc)
+			fi
+			if [ $packetsSum -gt 0 ]
+			then
+				avgControlOverhead=$(echo "$line / ($packetsSum * 256)" | bc)
+				controlOverheadDeviation=$(echo "$controlOverheadDeviation + (($avgControlOverhead - $8) ^ 2)" | bc)
+			fi
+			avgFoundPercentage=$(echo "$nFound * 100 / ($nRequesters - 1)" | bc)
+			avgSuccessPercentage=$(echo "$nSuccess * 100 / ($nRequesters - 1)" | bc)
+			let "nTimes = 0"
+			let "nFound = 0"
+			let "timesSum = 0"
+			let "nSuccess = 0"
+			let "packetsSum = 0"
+			foundDeviation=$(echo "$foundDeviation + (($avgFoundPercentage - $6) ^ 2)" | bc)
+			successDeviation=$(echo "$successDeviation + (($avgSuccessPercentage - $5) ^ 2)" | bc)
+		else
+			IFS='|' read -a values <<< "$line"
+			if [ ${values[0]} -ge 0 ]
+			then
+				let "nTimes += 1"
+				let "timesSum += values[0]"
+				let "packetsSum += values[3]"
+			fi
+			let "nFound += values[2]"
+			let "nSuccess += values[1]"
+		fi
+	done < "$file"
+	timeDeviation=$(echo "sqrt($timeDeviation / ($simulations - 1))" | bc)
+	foundDeviation=$(echo "sqrt($foundDeviation / ($simulations - 1))" | bc)
+	successDeviation=$(echo "sqrt($successDeviation / ($simulations - 1))" | bc)
+	packetsDeviation=$(echo "sqrt($packetsDeviation / ($simulations - 1))" | bc)
+	controlOverheadDeviation=$(echo "sqrt($controlOverheadDeviation / ($simulations - 1))" | bc)
+	echo "$timeDeviation $successDeviation $foundDeviation $packetsDeviation $controlOverheadDeviation"
+	echo " "
+}
+
+CalculateStatics() {
+	file=$1
+	nLines=0
+	nFound=0
+	nTimes=0
+	timesSum=0
+	nSuccess=0
+	avgTimes=0
+	packetsSum=0
+	simulations=0
+	nPackets=${2:-10}
+	nRequesters=${3:-4}
+	avgControlOverhead=0
+	avgFoundPercentage=0
+	avgSuccessPercentage=0
+	avgPacketsPercentage=0
+	let "nRequesters += 1"
+	while read line
+	do
+		let "nLines += 1"
+		if [ $(($nLines%$nRequesters)) -eq 0 ]
+		then
+			let "simulations += 1"
+			if [ $nTimes -gt 0 ]
+			then
+				avgTimes=$(echo "$avgTimes + ($timesSum / $nTimes)" | bc)
+				avgPacketsPercentage=$(echo "$avgPacketsPercentage + (($packetsSum * 100) / ($nPackets * $nTimes))" | bc)
+			fi
+			if [ $packetsSum -gt 0 ]
+			then
+				avgControlOverhead=$(echo "$avgControlOverhead + ($line / ($packetsSum * 256))" | bc)
+			fi
+			avgFoundPercentage=$(echo "$avgFoundPercentage + ($nFound * 100 / ($nRequesters - 1))" | bc)
+			avgSuccessPercentage=$(echo "$avgSuccessPercentage + ($nSuccess * 100 / ($nRequesters - 1))" | bc)
+			let "nTimes = 0"
+			let "nFound = 0"
+			let "timesSum = 0"
+			let "nSuccess = 0"
+			let "packetsSum = 0"
+		else
+			IFS='|' read -a values <<< "$line"
+			if [ ${values[0]} -ge 0 ]
+			then
+				let "nTimes += 1"
+				let "timesSum += values[0]"
+				let "packetsSum += values[3]"
+			fi
+			let "nFound += values[2]"
+			let "nSuccess += values[1]"
+		fi
+	done < "$file"
+	avgTimes=$(echo "$avgTimes / $simulations" | bc)
+	avgControlOverhead=$(echo "$avgControlOverhead / $simulations" | bc)
+	avgFoundPercentage=$(echo "$avgFoundPercentage / $simulations" | bc)
+	avgSuccessPercentage=$(echo "$avgSuccessPercentage / $simulations" | bc)
+	avgPacketsPercentage=$(echo "$avgPacketsPercentage / $simulations" | bc)
+	declare -a deviations=($(CalculateDeviations $file $nPackets $nRequesters $avgTimes $avgSuccessPercentage $avgFoundPercentage $avgPacketsPercentage $avgControlOverhead))
+	#confianza[0]=$(echo "$avgTimes + (1.96 * (${deviations[0]} / sqrt($simulations)))" | bc)
+	#confianza[1]=$(echo "$avgSuccessPercentage + (1.96 * (${deviations[1]} / sqrt($simulations)))" | bc)
+	#confianza[2]=$(echo "$avgFoundPercentage + (1.96 * (${deviations[2]} / sqrt($simulations)))" | bc)
+	#confianza[3]=$(echo "$avgPacketsPercentage + (1.96 * (${deviations[3]} / sqrt($simulations)))" | bc)
+	#confianza[4]=$(echo "$avgControlOverhead + (1.96 * (${deviations[4]} / sqrt($simulations)))" | bc)
+	confianza[0]=$(echo "1.96 * (${deviations[0]} / sqrt($simulations))" | bc)
+	confianza[1]=$(echo "1.96 * (${deviations[1]} / sqrt($simulations))" | bc)
+	confianza[2]=$(echo "1.96 * (${deviations[2]} / sqrt($simulations))" | bc)
+	confianza[3]=$(echo "1.96 * (${deviations[3]} / sqrt($simulations))" | bc)
+	confianza[4]=$(echo "1.96 * (${deviations[4]} / sqrt($simulations))" | bc)
+	echo "${confianza[0]} ${confianza[1]} ${confianza[2]} ${confianza[3]} ${confianza[4]}"
+	echo "$avgTimes $avgSuccessPercentage $avgFoundPercentage $avgPacketsPercentage $avgControlOverhead"
+	#confianza[0]=$(echo "$avgTimes - (1.96 * (${deviations[0]} / sqrt($simulations)))" | bc)
+	#confianza[1]=$(echo "$avgSuccessPercentage - (1.96 * (${deviations[1]} / sqrt($simulations)))" | bc)
+	#confianza[2]=$(echo "$avgFoundPercentage - (1.96 * (${deviations[2]} / sqrt($simulations)))" | bc)
+	#confianza[3]=$(echo "$avgPacketsPercentage - (1.96 * (${deviations[3]} / sqrt($simulations)))" | bc)
+	#confianza[4]=$(echo "$avgControlOverhead - (1.96 * (${deviations[4]} / sqrt($simulations)))" | bc)
+	#echo "${confianza[0]} ${confianza[1]} ${confianza[2]} ${confianza[3]} ${confianza[4]}"
+	echo " "
+}
+
+CalculateStatics stratos/mobile_0.txt > stratos/statics.txt
+CalculateStatics stratos/mobile_25.txt >> stratos/statics.txt
+CalculateStatics stratos/mobile_50.txt >> stratos/statics.txt
+CalculateStatics stratos/mobile_100.txt >> stratos/statics.txt
+echo " " >> stratos/statics.txt
+CalculateStatics stratos/requesters_1.txt 10 1 >> stratos/statics.txt
+CalculateStatics stratos/requesters_2.txt 10 2 >> stratos/statics.txt
+CalculateStatics stratos/requesters_4.txt 10 >> stratos/statics.txt
+CalculateStatics stratos/requesters_8.txt 10 8 >> stratos/statics.txt
+CalculateStatics stratos/requesters_16.txt 10 16 >> stratos/statics.txt
+CalculateStatics stratos/requesters_24.txt 10 24 >> stratos/statics.txt
+CalculateStatics stratos/requesters_32.txt 10 32 >> stratos/statics.txt
+echo " " >> stratos/statics.txt
+CalculateStatics stratos/services_1.txt >> stratos/statics.txt
+CalculateStatics stratos/services_2.txt >> stratos/statics.txt
+CalculateStatics stratos/services_4.txt >> stratos/statics.txt
+CalculateStatics stratos/services_8.txt >> stratos/statics.txt
+echo " " >> stratos/statics.txt
+CalculateStatics stratos/packets_1.txt 1 >> stratos/statics.txt
+CalculateStatics stratos/packets_10.txt >> stratos/statics.txt
+CalculateStatics stratos/packets_20.txt 20 >> stratos/statics.txt
+CalculateStatics stratos/packets_40.txt 40 >> stratos/statics.txt
