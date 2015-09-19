@@ -1,5 +1,3 @@
-#include "ns3/core-module.h"
-
 #include "stratos.h"
 
 int main(int argc, char *argv[]) {
