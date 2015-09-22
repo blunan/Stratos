@@ -16,6 +16,7 @@ NeighborhoodApplication::NeighborhoodApplication() {
 }
 
 void NeighborhoodApplication::DoInitialize() {
+	std::cout << "NeighborhoodApplication::" << "DoInitialize" << std:endl;
 	neighborhood.clear();
 	pthread_mutex_init(&mutex, NULL);
 	socket = Socket::CreateSocket(GetNode(), UdpSocketFactory::GetTypeId());
@@ -31,6 +32,7 @@ NeighborhoodApplication::~NeighborhoodApplication() {
 }
 
 void NeighborhoodApplication::DoDispose() {
+	std::cout << "NeighborhoodApplication::" << "DoDispose" << std:endl;
 	neighborhood.clear();
 	if(socket != NULL) {
 		socket->Close();
@@ -40,12 +42,14 @@ void NeighborhoodApplication::DoDispose() {
 }
 
 void NeighborhoodApplication::StartApplication() {
+	std::cout << "NeighborhoodApplication::" << "StartApplication" << std:endl;
 	ScheduleNextUpdate();
 	socket->SetRecvCallback(MakeCallback(&NeighborhoodApplication::ReceiveHelloMessage, this));
 	Simulator::Schedule(Seconds(Utilities::GetJitter()), &NeighborhoodApplication::ScheduleNextHelloMessage, this);
 }
 
 void NeighborhoodApplication::StopApplication() {
+	std::cout << "NeighborhoodApplication::" << "StopApplication" << std:endl;
 	Simulator::Cancel(sendHelloMessage);
 	Simulator::Cancel(updateNeighborhood);
 	if(socket != NULL) {
@@ -54,6 +58,7 @@ void NeighborhoodApplication::StopApplication() {
 }
 
 void NeighborhoodApplication::SendHelloMessage() {
+	std::cout << "NeighborhoodApplication::" << "SendHelloMessage" << std:endl;
 	Ptr<Packet> packet = Create<Packet>();
 	TypeHeader typeHeader(STRATOS_HELLO);
 	packet->AddHeader(typeHeader);
@@ -62,6 +67,7 @@ void NeighborhoodApplication::SendHelloMessage() {
 }
 
 void NeighborhoodApplication::UpdateNeighborhood() {
+	std::cout << "NeighborhoodApplication::" << "UpdateNeighborhood" << std:endl;
 	double seconds;
 	NEIGHBOR neighbor;
 	std::list<NEIGHBOR>::iterator i;
@@ -79,14 +85,17 @@ void NeighborhoodApplication::UpdateNeighborhood() {
 }
 
 void NeighborhoodApplication::ScheduleNextUpdate() {
+	std::cout << "NeighborhoodApplication::" << "ScheduleNextUpdate" << std:endl;
 	updateNeighborhood = Simulator::Schedule(Seconds(HELLO_TIME), &NeighborhoodApplication::UpdateNeighborhood, this);
 }
 
 void NeighborhoodApplication::ScheduleNextHelloMessage() {
+	std::cout << "NeighborhoodApplication::" << "ScheduleNextHelloMessage" << std:endl;
 	sendHelloMessage = Simulator::Schedule(Seconds(Utilities::GetJitter() + HELLO_TIME), &NeighborhoodApplication::SendHelloMessage, this);
 }
 
 void NeighborhoodApplication::ReceiveHelloMessage(Ptr<Socket> socket) {
+	std::cout << "NeighborhoodApplication::" << "ReceiveHelloMessage" << std:endl;
 	Address sourceAddress;
 	Ptr<Packet> packet = socket->RecvFrom(sourceAddress);
 	TypeHeader typeHeader;
@@ -100,6 +109,7 @@ void NeighborhoodApplication::ReceiveHelloMessage(Ptr<Socket> socket) {
 }
 
 void NeighborhoodApplication::AddUpdateNeighborhood(uint address, double now) {
+	std::cout << "NeighborhoodApplication::" << "AddUpdateNeighborhood" << std:endl;
 	pthread_mutex_lock(&mutex);
 	std::list<NEIGHBOR>::iterator i;
 	for(i = neighborhood.begin(); i != neighborhood.end(); i++) {
@@ -116,6 +126,7 @@ void NeighborhoodApplication::AddUpdateNeighborhood(uint address, double now) {
 }
 
 std::list<uint> NeighborhoodApplication::GetNeighborhood() {
+	std::cout << "NeighborhoodApplication::" << "GetNeighborhood" << std:endl;
 	std::list<uint> neighborhood;
 	std::list<NEIGHBOR>::iterator i;
 	pthread_mutex_lock(&mutex);
@@ -127,6 +138,7 @@ std::list<uint> NeighborhoodApplication::GetNeighborhood() {
 }
 
 bool NeighborhoodApplication::IsInNeighborhood(uint address) {
+	std::cout << "NeighborhoodApplication::" << "IsInNeighborhood" << std:endl;
 	std::list<uint> neighborhood = GetNeighborhood();
 	std::list<uint>::iterator i;
 	for(i = neighborhood.begin(); i != neighborhood.end(); i++)  {
