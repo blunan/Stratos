@@ -31,7 +31,6 @@ OntologyApplication::~OntologyApplication() {
 }
 
 void OntologyApplication::DoInitialize() {
-	std::cout << "NeighborhoodApplication::" << "DoInitialize" << std:endl;
 	bool alreadyOffered;
 	std::string service;
 	std::list<std::string>::iterator j;
