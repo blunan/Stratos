@@ -6,21 +6,21 @@
 
 #define MAX_HOPS 4
 
-#define SENSING_TIME 60 //seconds
-
 #define HELLO_TIME 2 //seconds
 
 #define MIN_JITTER 0.001 //1ms
 
 #define MAX_JITTER 0.01 //10ms
 
-#define HELLO_PORT 1199
+#define HELLO_PORT 60000
 
 #define VERIFY_TIME 1 //seconds
 
-#define SEARCH_PORT 1198
+#define SEARCH_PORT 60001
 
-#define SERVICE_PORT 1197
+#define SERVICE_PORT 60002
+
+#define SENSING_TIME 60 //seconds
 
 #define SENSING_TIME 60 //seconds
 
@@ -29,6 +29,8 @@
 #define PACKET_LENGTH 256 //bytes
 
 #define MAX_REQUEST_TIME 50 //seconds
+
+#define MAX_SCHEDULE_SIZE 3
 
 #define MAX_TIMES_NOT_SEEN 3
 

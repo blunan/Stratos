@@ -42,6 +42,7 @@ class NeighborhoodApplication : public Application {
 
 	public:
 		std::list<uint> GetNeighborhood();
+		bool IsInNeighborhood(uint address);
 };
 
 class NeighborhoodHelper : public ApplicationHelper {

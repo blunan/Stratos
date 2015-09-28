@@ -33,7 +33,6 @@ class SearchResponseHeader : public Header {
 
 		double GetDistance();
 		int GetHopDistance();
-		int GetOfferedServiceSize();
 		double GetRequestTimestamp();
 		Ipv4Address GetRequestAddress();
 		Ipv4Address GetResponseAddress();
@@ -43,7 +42,6 @@ class SearchResponseHeader : public Header {
 		void SetHopDistance(int hopDistance);
 		void SetRequestTimestamp(double requestTimestamp);
 		void SetRequestAddress(Ipv4Address requestAddress);
-		void SetOfferedServiceSize(int offeredServiceSize);
 		void SetResponseAddress(Ipv4Address responseAddress);
 		void SetOfferedService(OFFERED_SERVICE offeredService);
 };

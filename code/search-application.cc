@@ -23,12 +23,13 @@ void SearchApplication::DoInitialize() {
 	pthread_mutex_init(&mutex, NULL);
 	routeManager = DynamicCast<RouteApplication>(GetNode()->GetApplication(4));
 	serviceManager = DynamicCast<ServiceApplication>(GetNode()->GetApplication(5));
-	resultsManager = DynamicCast<ResultsApplication>(GetNode()->GetApplication(6));
+	resultsManager = DynamicCast<ResultsApplication>(GetNode()->GetApplication(7));
+	scheduleManager = DynamicCast<ScheduleApplication>(GetNode()->GetApplication(6));
 	ontologyManager = DynamicCast<OntologyApplication>(GetNode()->GetApplication(1));
 	positionManager = DynamicCast<PositionApplication>(GetNode()->GetApplication(2));
 	neighborhoodManager = DynamicCast<NeighborhoodApplication>(GetNode()->GetApplication(0));
-	localAddress = GetNode()->GetObject<Ipv4>()->GetAddress(1, 0).GetLocal();
 	socket = Socket::CreateSocket(GetNode(), UdpSocketFactory::GetTypeId());
+	localAddress = GetNode()->GetObject<Ipv4>()->GetAddress(1, 0).GetLocal();
 	InetSocketAddress local = InetSocketAddress(Ipv4Address::GetAny(), SEARCH_PORT);
 	socket->Bind(local);
 	Application::DoInitialize();
@@ -52,14 +53,36 @@ void SearchApplication::StopApplication() {
 	}
 }
 
+SearchResponseHeader SearchApplication::SelectBestResponse(std::list<SearchResponseHeader> responses) {
+	SearchResponseHeader response;
+	SearchResponseHeader bestResponse = responses.front();
+	responses.pop_front();
+	std::list<SearchResponseHeader>::iterator i;
+	for(i = responses.begin(); i != responses.end(); i++) {
+		response = *i;
+		if(response.GetOfferedService().semanticDistance < bestResponse.GetOfferedService().semanticDistance) {
+			bestResponse = response;
+		} else if(response.GetOfferedService().semanticDistance == bestResponse.GetOfferedService().semanticDistance) {
+			if(response.GetHopDistance() < bestResponse.GetHopDistance()) {
+				bestResponse = response;
+			} else if(response.GetHopDistance() == bestResponse.GetHopDistance()) {
+				if(response.GetResponseAddress() < bestResponse.GetResponseAddress()) {
+					bestResponse = response;
+				}
+			}
+		}
+	}
+	return bestResponse;
+}
+
 void SearchApplication::CreateAndSendRequest() {
 	SearchRequestHeader request = CreateRequest();
 	seenRequests[GetRequestKey(request)] = request.GetCurrentHops();
 	SendRequest(request);
 	resultsManager->Activate();
 	resultsManager->SetRequestTime(request.GetRequestTimestamp());
-	resultsManager->SetRequestPosition(request.GetRequestPosition());
 	resultsManager->SetRequestService(request.GetRequestedService());
+	resultsManager->SetRequestPosition(request.GetRequestPosition());
 	resultsManager->SetRequestDistance(request.GetMaxDistanceAllowed());
 }
 
@@ -98,14 +121,14 @@ void SearchApplication::SendBroadcastMessage(Ptr<Packet> packet) {
 bool SearchApplication::IsValidRequest(SearchRequestHeader request) {
 	POSITION requesterPosition = request.GetRequestPosition();
 	POSITION myPosition = positionManager->GetCurrentPosition();
-	double distance = positionManager->CalculateDistanceFromTo(requesterPosition, myPosition);
-	if(distance > request.GetMaxDistanceAllowed()) {
+	double distance = PositionApplication::CalculateDistanceFromTo(requesterPosition, myPosition);
+	if(seenRequests.find(GetRequestKey(request)) != seenRequests.end()) {
 		return false;
 	}
 	if(request.GetCurrentHops() > request.GetMaxHopsAllowed()) {
 		return false;
 	}
-	if(seenRequests.find(GetRequestKey(request)) != seenRequests.end()) {
+	if(distance > request.GetMaxDistanceAllowed()) {
 		return false;
 	}
 	return true;
@@ -120,7 +143,7 @@ void SearchApplication::SendUnicastMessage(Ptr<Packet> packet, uint destinationA
 
 SearchRequestHeader SearchApplication::CreateRequest() {
 	SearchRequestHeader request;
-	request.SetCurrentHops(1);
+	request.SetCurrentHops(0);
 	request.SetMaxHopsAllowed(MAX_HOPS);
 	request.SetRequestAddress(localAddress);
 	request.SetRequestTimestamp(Utilities::GetCurrentRawDateTime());
@@ -136,7 +159,6 @@ void SearchApplication::SendRequest(SearchRequestHeader requestHeader) {
 	packet->AddHeader(requestHeader);
 	TypeHeader typeHeader(STRATOS_SEARCH_REQUEST);
 	packet->AddHeader(typeHeader);
-	pendings[GetRequestKey(requestHeader)] = neighborhoodManager->GetNeighborhood();
 	Simulator::Schedule(Seconds(Utilities::GetJitter()), &SearchApplication::SendBroadcastMessage, this, packet);
 	Simulator::Schedule(Seconds(VERIFY_TIME), &SearchApplication::VerifyResponses, this, GetRequestKey(requestHeader));
 	//std::cout << requestHeader << std::endl;
@@ -144,23 +166,27 @@ void SearchApplication::SendRequest(SearchRequestHeader requestHeader) {
 
 void SearchApplication::ForwardRequest(SearchRequestHeader requestHeader) {
 	Ptr<Packet> packet = Create<Packet>();
-	requestHeader.SetCurrentHops(requestHeader.GetCurrentHops() + 1);
 	packet->AddHeader(requestHeader);
 	TypeHeader typeHeader(STRATOS_SEARCH_REQUEST);
 	packet->AddHeader(typeHeader);
 	Simulator::Schedule(Seconds(Utilities::GetJitter()), &SearchApplication::SendBroadcastMessage, this, packet);
-	Simulator::Schedule(Seconds(VERIFY_TIME), &SearchApplication::VerifyResponses, this, GetRequestKey(requestHeader));
+	if(requestHeader.GetCurrentHops() == requestHeader.GetMaxHopsAllowed()) {
+		VerifyResponses(GetRequestKey(requestHeader));
+	} else {
+		Simulator::Schedule(Seconds(VERIFY_TIME), &SearchApplication::VerifyResponses, this, GetRequestKey(requestHeader));
+	}
 }
 
 void SearchApplication::ReceiveRequest(Ptr<Packet> packet, uint senderAddress) {
 	SearchRequestHeader requestHeader;
 	packet->RemoveHeader(requestHeader);
+	requestHeader.SetCurrentHops(requestHeader.GetCurrentHops() + 1);
 	pthread_mutex_lock(&mutex);
 	if(!IsValidRequest(requestHeader)) {
 		if(requestHeader.GetCurrentHops() < seenRequests[GetRequestKey(requestHeader)]) {
 			CreateAndSendError(requestHeader, senderAddress);
-		} else if(requestHeader.GetCurrentHops() == (seenRequests[GetRequestKey(requestHeader)] + 1)) {
-			//std::cout << localAddress << " <-" << Ipv4Address(senderAddress) << std::endl;
+		} else if(requestHeader.GetCurrentHops() == (seenRequests[GetRequestKey(requestHeader)] + 2)) {
+			//std::cout << localAddress << " -> " << Ipv4Address(senderAddress) << std::endl;
 			std::list<uint> pending = pendings[GetRequestKey(requestHeader)];
 			pending.push_back(senderAddress);
 			pendings[GetRequestKey(requestHeader)] = pending;
@@ -169,11 +195,10 @@ void SearchApplication::ReceiveRequest(Ptr<Packet> packet, uint senderAddress) {
 		return;
 	}
 	parents[GetRequestKey(requestHeader)] = senderAddress;
-	seenRequests[GetRequestKey(requestHeader)] = requestHeader.GetCurrentHops() + 1;
+	seenRequests[GetRequestKey(requestHeader)] = requestHeader.GetCurrentHops();
 	routeManager->SetAsRouteTo(senderAddress, requestHeader.GetRequestAddress().Get());
-	//pendings[GetRequestKey(requestHeader)] = neighborhoodManager->GetNeighborhood();
-	//std::cout << Ipv4Address(senderAddress) << " <- " << localAddress << std::endl;
 	pthread_mutex_unlock(&mutex);
+	//std::cout << Ipv4Address(senderAddress) << " <- " << localAddress << std::endl;
 	CreateAndSaveResponse(requestHeader);
 	ForwardRequest(requestHeader);
 }
@@ -249,12 +274,17 @@ void SearchApplication::VerifyResponses(std::pair<uint, double> request) {
 	pendings[request] = pending;
 	pthread_mutex_unlock(&mutex);
 	int hops = seenRequests[request];
-	double timeElapsed = (Now().GetMilliSeconds() - request.second) / 1000;
-	if(pending.empty() || timeElapsed >= ((MAX_HOPS - hops + 1) * VERIFY_TIME)) {
+	double maxSecondsWait = (double) ((MAX_HOPS - hops) * VERIFY_TIME);
+	double secondsElapsed = (Now().GetMilliSeconds() - request.second) / 1000;
+	if(pending.empty() || secondsElapsed >= maxSecondsWait) {
 		SelectAndSendBestResponse(request);
-		return;
+	} else {
+		Simulator::Schedule(Seconds(VERIFY_TIME), &SearchApplication::VerifyResponses, this, request);
 	}
-	Simulator::Schedule(Seconds(VERIFY_TIME), &SearchApplication::VerifyResponses, this, request);
+}
+
+void SearchApplication::CreateAndSaveResponse(SearchRequestHeader request) {
+	SaveResponse(CreateResponse(request));
 }
 
 void SearchApplication::ReceiveResponse(Ptr<Packet> packet, uint senderAddress) {
@@ -267,13 +297,9 @@ void SearchApplication::ReceiveResponse(Ptr<Packet> packet, uint senderAddress) 
 	std::list<uint> pending = pendings[GetRequestKey(responseHeader)];
 	pending.remove(senderAddress);
 	pendings[GetRequestKey(responseHeader)] = pending;
-	routeManager->SetAsRouteTo(senderAddress, responseHeader.GetResponseAddress().Get());
-	//std::cout << localAddress << " -> " << Ipv4Address(senderAddress) << std::endl;
 	pthread_mutex_unlock(&mutex);
-}
-
-void SearchApplication::CreateAndSaveResponse(SearchRequestHeader request) {
-	SaveResponse(CreateResponse(request));
+	routeManager->SetAsRouteTo(senderAddress, responseHeader.GetResponseAddress().Get());
+	//std::cout << localAddress << " <-> " << Ipv4Address(senderAddress) << std::endl;
 }
 
 void SearchApplication::SelectAndSendBestResponse(std::pair<uint, double> request) {
@@ -284,14 +310,10 @@ void SearchApplication::SelectAndSendBestResponse(std::pair<uint, double> reques
 		//std::cout << Now().GetMilliSeconds() << " -> Search response to " << localAddress << " no responses for request" << std::endl;
 		return;
 	}
-	SearchResponseHeader response = responses.front();
+	SearchResponseHeader response = SelectBestResponse(responses);
 	if(response.GetRequestAddress() == localAddress) {
-		//std::cout << response << std::endl;
-		serviceManager->CreateAndExecuteSensingSchedule(responses);
-		//serviceManager->CreateAndSendRequest(response.GetResponseAddress(), response.GetOfferedService().service);
-		//resultsManager->SetResponseSemanticDistance(response.GetOfferedService().semanticDistance);
+		scheduleManager->CreateAndExecuteSchedule(responses);
 	} else {
-		response = SelectBestResponse(responses);
 		SendResponse(response, parents[request]);
 	}
 }
@@ -299,7 +321,7 @@ void SearchApplication::SelectAndSendBestResponse(std::pair<uint, double> reques
 SearchResponseHeader SearchApplication::CreateResponse(SearchRequestHeader request) {
 	POSITION requester = request.GetRequestPosition();
 	POSITION me = positionManager->GetCurrentPosition();
-	double distance = positionManager->CalculateDistanceFromTo(requester, me);
+	double distance = PositionApplication::CalculateDistanceFromTo(requester, me);
 	SearchResponseHeader response;
 	response.SetDistance(distance);
 	response.SetResponseAddress(localAddress);
@@ -322,28 +344,6 @@ void SearchApplication::SendResponse(SearchResponseHeader responseHeader, uint p
 	TypeHeader typeHeader(STRATOS_SEARCH_RESPONSE);
 	packet->AddHeader(typeHeader);
 	Simulator::Schedule(Seconds(Utilities::GetJitter()), &SearchApplication::SendUnicastMessage, this, packet, parent);
-}
-
-SearchResponseHeader SearchApplication::SelectBestResponse(std::list<SearchResponseHeader> responses) {
-	SearchResponseHeader response;
-	SearchResponseHeader bestResponse = responses.front();
-	responses.pop_front();
-	std::list<SearchResponseHeader>::iterator i;
-	for(i = responses.begin(); i != responses.end(); i++) {
-		response = *i;
-		if(response.GetOfferedService().semanticDistance < bestResponse.GetOfferedService().semanticDistance) {
-			bestResponse = response;
-		} else if(response.GetOfferedService().semanticDistance == bestResponse.GetOfferedService().semanticDistance) {
-			if(response.GetHopDistance() < bestResponse.GetHopDistance()) {
-				bestResponse = response;
-			} else if(response.GetHopDistance() == bestResponse.GetHopDistance()) {
-				if(response.GetResponseAddress() < bestResponse.GetResponseAddress()) {
-					bestResponse = response;
-				}
-			}
-		}
-	}
-	return bestResponse;
 }
 
 SearchHelper::SearchHelper() {

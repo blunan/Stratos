@@ -31,19 +31,19 @@ OntologyApplication::~OntologyApplication() {
 }
 
 void OntologyApplication::DoInitialize() {
-	bool found;
+	bool alreadyOffered;
 	std::string service;
 	std::list<std::string>::iterator j;
 	for(int i = 0; i < NUMBER_OF_SERVICES_OFFERED; i++) {
-		found = false;
+		alreadyOffered = false;
 		service = GetRandomService();
 		for(j = offeredServices.begin(); j != offeredServices.end(); j++) {
 			if(service.compare(*j) == 0) {
-				found = true;
+				alreadyOffered = true;
 				break;
 			}
 		}
-		if(found) {
+		if(alreadyOffered) {
 			i--;
 		} else {
 			offeredServices.push_back(service);
@@ -63,23 +63,6 @@ void OntologyApplication::StartApplication() {
 void OntologyApplication::StopApplication() {
 }
 
-std::string OntologyApplication::GetRandomService() {
-	return SERVICES[(int) Utilities::Random(1, TOTAL_NUMBER_OF_SERVICES)];
-}
-
-std::string OntologyApplication::GetCommonPrefix(std::string c1, std::string c2) {
-	int minLength = c1.length() > c2.length() ? c2.length() : c1.length();
-	std::string commonPrefix;
-	for(int i = 0; i < minLength; i++) {
-		if(c1.at(i) == c2.at(i)) {
-			commonPrefix.push_back(c1.at(i));
-		} else {
-			break;
-		}
-	}
-	return commonPrefix;
-}
-
 int OntologyApplication::SemanticDistance(std::string requiredService, std::string offeredService) {
 	if(offeredService.compare(requiredService) == 0) {
 		return 0;
@@ -93,11 +76,24 @@ int OntologyApplication::SemanticDistance(std::string requiredService, std::stri
 	return distanceFromOfferedToCommon > distanceFromRequiredToCommon ? distanceFromOfferedToCommon : distanceFromRequiredToCommon;
 }
 
-std::list<std::string> OntologyApplication::GetOfferedServices() {
-	return offeredServices;
+std::string OntologyApplication::GetCommonPrefix(std::string requiredService, std::string offeredService) {
+	int minLength = requiredService.length() > offeredService.length() ? offeredService.length() : requiredService.length();
+	std::string commonPrefix;
+	for(int i = 0; i < minLength; i++) {
+		if(requiredService.at(i) == offeredService.at(i)) {
+			commonPrefix.push_back(requiredService.at(i));
+		} else {
+			break;
+		}
+	}
+	return commonPrefix;
 }
 
-OFFERED_SERVICE OntologyApplication::GetBestOfferedService(std::string requiredService) {
+std::string OntologyApplication::GetRandomService() {
+	return SERVICES[(int) Utilities::Random(1, TOTAL_NUMBER_OF_SERVICES)];
+}
+
+OFFERED_SERVICE OntologyApplication::GetBestOfferedService(std::string requiredService, std::list<std::string> offeredServices) {
 	std::string service;
 	int semanticDistance;
 	std::string bestOfferedService;
@@ -117,7 +113,21 @@ OFFERED_SERVICE OntologyApplication::GetBestOfferedService(std::string requiredS
 	return result;
 }
 
-OFFERED_SERVICE OntologyApplication::GetBestOfferedService(std::string requiredService, std::list<std::string> offeredServices) {
+bool OntologyApplication::DoIProvideService(std::string service) {
+	std::list<std::string>::iterator i;
+	for(i = offeredServices.begin(); i != offeredServices.end(); i++) {
+		if(service.compare(*i) == 0) {
+			return true;
+		}
+	}
+	return false;
+}
+
+std::list<std::string> OntologyApplication::GetOfferedServices() {
+	return offeredServices;
+}
+
+OFFERED_SERVICE OntologyApplication::GetBestOfferedService(std::string requiredService) {
 	std::string service;
 	int semanticDistance;
 	std::string bestOfferedService;

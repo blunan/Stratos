@@ -14,7 +14,7 @@ else
 	mkdir stratos
 fi
 
-for i in {1..3}
+for i in {1..30}
 do
 	./waf --run "stratos --nMobile=0" >> stratos/mobile_0.txt
 	./waf --run "stratos --nMobile=25" >> stratos/mobile_25.txt
@@ -34,8 +34,9 @@ do
 	./waf --run "stratos --nServices=4" >> stratos/services_4.txt
 	./waf --run "stratos --nServices=8" >> stratos/services_8.txt
 
-	./waf --run "stratos --nPackets=1" >> stratos/packets_1.txt
+	#./waf --run "stratos --nPackets=1" >> stratos/packets_1.txt
 	./waf --run "stratos --nPackets=10" >> stratos/packets_10.txt
 	./waf --run "stratos --nPackets=20" >> stratos/packets_20.txt
 	./waf --run "stratos --nPackets=40" >> stratos/packets_40.txt
+	./waf --run "stratos --nPackets=60" >> stratos/packets_60.txt
 done

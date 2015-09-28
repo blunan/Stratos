@@ -8,10 +8,13 @@
 #include "results-application.h"
 #include "service-error-header.h"
 #include "ontology-application.h"
+#include "schedule-application.h"
 #include "neighborhood-application.h"
 #include "service-request-response-header.h"
 
 using namespace ns3;
+
+class ScheduleApplication;
 
 class ServiceApplication : public Application {
 
@@ -30,37 +33,28 @@ class ServiceApplication : public Application {
 		virtual void StopApplication();
 
 	public:
-		void CreateAndSendRequest(Ipv4Address destinationAddress, std::string service);
+		int NUMBER_OF_PACKETS_TO_SEND;
+		void CreateAndSendRequest(Ipv4Address destinationAddress, std::string service, int packets);
 
 	private:
 		Ptr<Socket> socket;
 		Ipv4Address localAddress;
-		int NUMBER_OF_PACKETS_TO_SEND;
 		Ptr<RouteApplication> routeManager;
 		Ptr<ResultsApplication> resultsManager;
 		Ptr<OntologyApplication> ontologyManager;
+		Ptr<ScheduleApplication> scheduleManager;
 		Ptr<NeighborhoodApplication> neighborhoodManager;
 		std::map<std::pair<uint, std::string>, Flag> status;
 		std::map<std::pair<uint, std::string>, int> packets;
+		std::map<std::pair<uint, std::string>, int> maxPackets;
 		std::map<std::pair<uint, std::string>, EventId> timers;
 		
 		void ReceiveMessage(Ptr<Socket> socket);
-		bool DoIProvideService(std::string service);
-		bool IsInNeighborhood(uint destinationAddress);
 		void CancelService(std::pair<uint, std::string> key);
 		void SendUnicastMessage(Ptr<Packet> packet, uint destinationAddress);
 		std::pair<uint, std::string> GetSenderKey(ServiceErrorHeader errorHeader);
-		void CreateAndExecuteSensingSchedule(std::list<SearchResponseHeader> responses);
 		std::pair<uint, std::string> GetSenderKey(ServiceRequestResponseHeader requestResponse);
 		std::pair<uint, std::string> GetDestinationKey(ServiceRequestResponseHeader requestResponse);
-
-		std::map<std::pair<uint, std::string>, std::string> timestamps;
-		std::map<std::pair<std::string, std::string>, int> sensingTime;
-		std::map<std::pair<std::string, std::string>, int> totalPackets;
-		std::map<std::pair<std::string, std::string>, std::list<SearchResponseHeader>> responses;
-		void UseNextSensor();
-		double UpdatePackets();
-		double UpdatePacketsAndContinueSchedule();
 		
 		void ReceiveRequest(Ptr<Packet> packet);
 		void SendRequest(ServiceRequestResponseHeader requestHeader);

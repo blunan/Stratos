@@ -56,7 +56,6 @@ void NeighborhoodApplication::StopApplication() {
 void NeighborhoodApplication::SendHelloMessage() {
 	Ptr<Packet> packet = Create<Packet>();
 	TypeHeader typeHeader(STRATOS_HELLO);
-	//resultsManager->addBytesControl(typeHeader.GetSerializedSize());
 	packet->AddHeader(typeHeader);
 	socket->Send(packet);
 	ScheduleNextHelloMessage();
@@ -125,6 +124,17 @@ std::list<uint> NeighborhoodApplication::GetNeighborhood() {
 	}
 	pthread_mutex_unlock(&mutex);
 	return neighborhood;
+}
+
+bool NeighborhoodApplication::IsInNeighborhood(uint address) {
+	std::list<uint> neighborhood = GetNeighborhood();
+	std::list<uint>::iterator i;
+	for(i = neighborhood.begin(); i != neighborhood.end(); i++)  {
+		if(address == (*i)) {
+			return true;
+		}
+	}
+	return false;
 }
 
 NeighborhoodHelper::NeighborhoodHelper() {
