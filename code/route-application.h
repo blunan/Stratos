@@ -30,7 +30,7 @@ class RouteApplication : public Application {
 
 	public:
 		uint GetRouteTo(uint destination);
-		void SetAsRouteTo(uint nextStep, uint destination);
+		void SetAsRouteTo(uint nextHop, uint destination);
 };
 
 class RouteHelper : public ApplicationHelper {
