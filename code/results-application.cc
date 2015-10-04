@@ -1,5 +1,7 @@
 #include "results-application.h"
 
+#include "ns3/internet-module.h"
+
 #include <limits>
 
 #include "utilities.h"

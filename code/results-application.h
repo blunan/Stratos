@@ -1,8 +1,6 @@
 #ifndef RESULTS_APPLICATION_H
 #define RESULTS_APPLICATION_H
 
-#include "ns3/internet-module.h"
-
 #include <map>
 #include <pthread.h>
 
