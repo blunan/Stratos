@@ -159,7 +159,7 @@ std::list<std::string> OntologyApplication::GetOfferedServices() {
 OFFERED_SERVICE OntologyApplication::GetBestOfferedService(std::string requiredService) {
 	NS_LOG_FUNCTION(this << requiredService);
 	OFFERED_SERVICE bestOfferedService = GetBestOfferedService(requiredService, offeredServices);
-	NS_LOG_DEBUG(GetNode()->GetObject<Ipv4>()->GetAddress(1, 0).GetLocal() << " -> Service " << bestOfferedService.service << " with semantic distance " << bestOfferedService.semanticDistance << " is the best option in my services");
+	NS_LOG_DEBUG(GetNode()->GetObject<Ipv4>()->GetAddress(1, 0).GetLocal() << " -> service " << bestOfferedService.service << " with semantic distance " << bestOfferedService.semanticDistance << " is the best option in my services");
 	return bestOfferedService;
 }
 
