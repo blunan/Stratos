@@ -107,7 +107,7 @@ void NeighborhoodApplication::ReceiveHelloMessage(Ptr<Socket> socket) {
 	TypeHeader typeHeader;
 	packet->RemoveHeader(typeHeader);
 	if(!typeHeader.IsValid() || typeHeader.GetType() != STRATOS_HELLO) {
-		NS_LOG_WARN(this << " received invalid package, might be corrupted or not a hello package");
+		NS_LOG_WARN(GetNode()->GetObject<Ipv4>()->GetAddress(1, 0).GetLocal() << " received invalid package, might be corrupted or not a hello package");
 		return;
 	}
 	InetSocketAddress inetSourceAddress = InetSocketAddress::ConvertFrom(sourceAddress);
@@ -149,7 +149,7 @@ std::list<uint> NeighborhoodApplication::GetNeighborhood() {
 }
 
 bool NeighborhoodApplication::IsInNeighborhood(uint address) {
-	NS_LOG_FUNCTION(GetNode()->GetObject<Ipv4>()->GetAddress(1, 0).GetLocal() << address);
+	NS_LOG_FUNCTION(this << address);
 	std::list<uint> neighborhood = GetNeighborhood();
 	std::list<uint>::iterator i;
 	for(i = neighborhood.begin(); i != neighborhood.end(); i++)  {
