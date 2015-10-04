@@ -52,14 +52,13 @@ void ResultsApplication::StopApplication() {
 		int success = 1;
 		int nPackets = packetsTimes.size();
 		double elapsedTimeFromRequestResponseToFirstServiceResponse = -1;
-		NS_LOG_INFO(Ipv4Address(localAddress) << " -> received " << nPackets << " packets");
+		NS_LOG_DEBUG(Ipv4Address(localAddress) << " -> received " << nPackets << " packets");
 		if(nPackets > 0) {
 			elapsedTimeFromRequestResponseToFirstServiceResponse = packetsTimes.front() - requestTime;
-			NS_LOG_INFO(Ipv4Address(localAddress) << " -> time elapsed from request response to the first service response is " << elapsedTimeFromRequestResponseToFirstServiceResponse);
 		}
 		for(std::map<uint, int>::iterator i = semanticDistances.begin(); i != semanticDistances.end(); i++) {
 			if(i->second < responseSemanticDistance) {
-				NS_LOG_INFO(Ipv4Address(localAddress) << " -> at least the node " << Ipv4Address(i->first) << " was a better option providing a service with semantic distance " << i->second << " for service " << requestService);
+				NS_LOG_DEBUG(Ipv4Address(localAddress) << " -> at least the node " << Ipv4Address(i->first) << " was a better option providing a service with semantic distance " << i->second << " for service " << requestService);
 				success = 0;
 				break;
 			}
@@ -80,7 +79,7 @@ void ResultsApplication::AddPacket(double receiveTime) {
 	pthread_mutex_lock(&mutex);
 	packetsTimes.push_back(receiveTime);
 	pthread_mutex_unlock(&mutex);
-	NS_LOG_INFO(Ipv4Address(localAddress) << " -> received service packet at " << receiveTime);
+	NS_LOG_DEBUG(Ipv4Address(localAddress) << " -> received service packet at " << receiveTime);
 }
 
 void ResultsApplication::SetRequestTime(double requestTime) {
@@ -111,7 +110,7 @@ void ResultsApplication::EvaluateNode(Ptr<ResultsApplication> requester) {
 	NS_LOG_FUNCTION(this);
 	POSITION position = positionManager->GetCurrentPosition();
 	std::list<std::string> services = ontologyManager->GetOfferedServices();
-	NS_LOG_INFO(Ipv4Address(localAddress) << " -> calling " << requester->GetNode()->GetObject<Ipv4>()->GetAddress(1, 0).GetLocal() << " to evaluate me");
+	NS_LOG_DEBUG(Ipv4Address(localAddress) << " -> calling " << requester->GetNode()->GetObject<Ipv4>()->GetAddress(1, 0).GetLocal() << " to evaluate me");
 	requester->Evaluate(localAddress, position, services);
 }
 
@@ -125,12 +124,12 @@ void ResultsApplication::SetResponseSemanticDistance(int responseSemanticDistanc
 void ResultsApplication::Evaluate(uint nodeAddress, POSITION nodePosition, std::list<std::string> nodeServices) {
 	NS_LOG_FUNCTION(this);
 	if(localAddress == nodeAddress) {
-		NS_LOG_INFO(Ipv4Address(localAddress) << " -> won't evaluate myself");
+		NS_LOG_DEBUG(Ipv4Address(localAddress) << " -> won't evaluate myself");
 		return;
 	}
 	double distance = PositionApplication::CalculateDistanceFromTo(nodePosition, requestPosition);
 	if(distance > requestDistance) {
-		NS_LOG_INFO(Ipv4Address(localAddress) << " -> " << Ipv4Address(nodeAddress) << " is not in the area of interes");
+		NS_LOG_DEBUG(Ipv4Address(localAddress) << " -> " << Ipv4Address(nodeAddress) << " is not in the area of interes");
 		return;
 	}
 	OFFERED_SERVICE service = OntologyApplication::GetBestOfferedService(requestService, nodeServices);

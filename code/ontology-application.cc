@@ -46,6 +46,7 @@ void OntologyApplication::DoInitialize() {
 		service = GetRandomService();
 		for(j = offeredServices.begin(); j != offeredServices.end(); j++) {
 			if(service.compare(*j) == 0) {
+				NS_LOG_DEBUG(GetNode()->GetObject<Ipv4>()->GetAddress(1, 0).GetLocal() << " -> service " << service << " is already a offered service");
 				alreadyOffered = true;
 				break;
 			}
@@ -81,15 +82,14 @@ int OntologyApplication::SemanticDistance(std::string requiredService, std::stri
 		return 0;
 	}
 	std::string commonPrefix = GetCommonPrefix(requiredService, offeredService);
-	NS_LOG_INFO(requiredService << " and " << offeredService << " common prefix is " << commonPrefix);
 	if(offeredService.compare(commonPrefix) == 0) {
 		NS_LOG_DEBUG(offeredService << " - " << commonPrefix << " = 0, " << offeredService << " is the first common ancestor with " << requiredService);
 		return 0;
 	}
 	int distanceFromOfferedToCommon = offeredService.length() - commonPrefix.length();
-	NS_LOG_INFO(offeredService << " - " << commonPrefix << " = " << distanceFromOfferedToCommon);
+	NS_LOG_DEBUG(offeredService << " - " << commonPrefix << " = " << distanceFromOfferedToCommon);
 	int distanceFromRequiredToCommon = requiredService.length() - commonPrefix.length();
-	NS_LOG_INFO(requiredService << " - " << commonPrefix << " = " << distanceFromRequiredToCommon);
+	NS_LOG_DEBUG(requiredService << " - " << commonPrefix << " = " << distanceFromRequiredToCommon);
 	NS_LOG_DEBUG(requiredService << " - " << offeredService << " = " << (distanceFromOfferedToCommon > distanceFromRequiredToCommon ? distanceFromOfferedToCommon : distanceFromRequiredToCommon));
 	return distanceFromOfferedToCommon > distanceFromRequiredToCommon ? distanceFromOfferedToCommon : distanceFromRequiredToCommon;
 }

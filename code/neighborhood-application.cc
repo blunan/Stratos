@@ -83,7 +83,7 @@ void NeighborhoodApplication::UpdateNeighborhood() {
 		seconds = Utilities::GetSecondsElapsedSinceUntil(neighbor.lastSeen, now);
 		if(seconds >= MAX_TIMES_NOT_SEEN * HELLO_TIME) {
 			neighborhood.erase(i--);
-			NS_LOG_INFO(GetNode()->GetObject<Ipv4>()->GetAddress(1, 0).GetLocal() << " -> the node " << Ipv4Address(neighbor.address) << " left neighborhood");
+			NS_LOG_DEBUG(GetNode()->GetObject<Ipv4>()->GetAddress(1, 0).GetLocal() << " -> the node " << Ipv4Address(neighbor.address) << " left neighborhood");
 		}
 	}
 	pthread_mutex_unlock(&mutex);
@@ -112,7 +112,7 @@ void NeighborhoodApplication::ReceiveHelloMessage(Ptr<Socket> socket) {
 	}
 	InetSocketAddress inetSourceAddress = InetSocketAddress::ConvertFrom(sourceAddress);
 	Ipv4Address sender = inetSourceAddress.GetIpv4();
-	NS_LOG_INFO(GetNode()->GetObject<Ipv4>()->GetAddress(1, 0).GetLocal() << " -> received hello from " << Ipv4Address(sender.Get()));
+	NS_LOG_DEBUG(GetNode()->GetObject<Ipv4>()->GetAddress(1, 0).GetLocal() << " -> received hello from " << Ipv4Address(sender.Get()));
 	AddUpdateNeighborhood(sender.Get(), Utilities::GetCurrentRawDateTime());
 }
 
@@ -122,7 +122,7 @@ void NeighborhoodApplication::AddUpdateNeighborhood(uint address, double now) {
 	std::list<NEIGHBOR>::iterator i;
 	for(i = neighborhood.begin(); i != neighborhood.end(); i++) {
 		if((*i).address == address) {
-			NS_LOG_INFO(GetNode()->GetObject<Ipv4>()->GetAddress(1, 0).GetLocal() << " -> node " << Ipv4Address(address) << " was already in neighborhood, last seen will be updated");
+			NS_LOG_DEBUG(GetNode()->GetObject<Ipv4>()->GetAddress(1, 0).GetLocal() << " -> node " << Ipv4Address(address) << " was already in neighborhood, last seen will be updated");
 			neighborhood.erase(i);
 			break;
 		}
@@ -131,7 +131,7 @@ void NeighborhoodApplication::AddUpdateNeighborhood(uint address, double now) {
 	neighbor.lastSeen = now;
 	neighbor.address = address;
 	neighborhood.push_back(neighbor);
-	NS_LOG_INFO(GetNode()->GetObject<Ipv4>()->GetAddress(1, 0).GetLocal() << " -> node " << Ipv4Address(address) << " last seen at " << now);
+	NS_LOG_DEBUG(GetNode()->GetObject<Ipv4>()->GetAddress(1, 0).GetLocal() << " -> node " << Ipv4Address(address) << " last seen at " << now);
 	pthread_mutex_unlock(&mutex);
 }
 
