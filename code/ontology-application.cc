@@ -116,23 +116,25 @@ std::string OntologyApplication::GetRandomService() {
 }
 
 OFFERED_SERVICE OntologyApplication::GetBestOfferedService(std::string requiredService, std::list<std::string> offeredServices) {
-	//NS_LOG_FUNCTION(requiredService << offeredServices);
+	NS_LOG_FUNCTION(requiredService << &offeredServices);
 	std::string service;
 	int semanticDistance;
 	std::string bestOfferedService;
-	int minSemanticDistance = std::numeric_limits<int>::max();
 	std::list<std::string>::iterator i;
+	int minSemanticDistance = std::numeric_limits<int>::max();
 	for(i = offeredServices.begin(); i != offeredServices.end(); i++) {
 		service = *i;
 		semanticDistance = SemanticDistance(requiredService, service);
 		if(semanticDistance < minSemanticDistance) {
 			bestOfferedService = service;
 			minSemanticDistance = semanticDistance;
+			NS_LOG_INFO("Best service found in list is now " << bestOfferedService << " with semantic distance " << semanticDistance);
 		}
 	}
 	OFFERED_SERVICE result;
 	result.service = bestOfferedService;
 	result.semanticDistance = minSemanticDistance;
+	NS_LOG_DEBUG("Service " << bestOfferedService << " with semantic distance " << minSemanticDistance << " is the best option in list");
 	return result;
 }
 
@@ -141,9 +143,11 @@ bool OntologyApplication::DoIProvideService(std::string service) {
 	std::list<std::string>::iterator i;
 	for(i = offeredServices.begin(); i != offeredServices.end(); i++) {
 		if(service.compare(*i) == 0) {
+			NS_LOG_DEBUG(GetNode()->GetObject<Ipv4>()->GetAddress(1, 0).GetLocal() << " -> I do provide the service " << service);
 			return true;
 		}
 	}
+	NS_LOG_DEBUG(GetNode()->GetObject<Ipv4>()->GetAddress(1, 0).GetLocal() << " -> I do not provide the service " << service);
 	return false;
 }
 
@@ -154,23 +158,9 @@ std::list<std::string> OntologyApplication::GetOfferedServices() {
 
 OFFERED_SERVICE OntologyApplication::GetBestOfferedService(std::string requiredService) {
 	NS_LOG_FUNCTION(this << requiredService);
-	std::string service;
-	int semanticDistance;
-	std::string bestOfferedService;
-	int minSemanticDistance = std::numeric_limits<int>::max();
-	std::list<std::string>::iterator i;
-	for(i = offeredServices.begin(); i != offeredServices.end(); i++) {
-		service = *i;
-		semanticDistance = SemanticDistance(requiredService, service);
-		if(semanticDistance < minSemanticDistance) {
-			bestOfferedService = service;
-			minSemanticDistance = semanticDistance;
-		}
-	}
-	OFFERED_SERVICE result;
-	result.service = bestOfferedService;
-	result.semanticDistance = minSemanticDistance;
-	return result;
+	OFFERED_SERVICE bestOfferedService = GetBestOfferedService(requiredService, offeredServices);
+	NS_LOG_DEBUG(GetNode()->GetObject<Ipv4>()->GetAddress(1, 0).GetLocal() << " -> Service " << bestOfferedService.service << " with semantic distance " << bestOfferedService.semanticDistance << " is the best option in my services");
+	return bestOfferedService;
 }
 
 OntologyHelper::OntologyHelper() {
