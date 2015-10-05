@@ -4,9 +4,12 @@
 #include "definitions.h"
 #include "type-header.h"
 
+NS_LOG_COMPONENT_DEFINE("SearchApplication");
+
 NS_OBJECT_ENSURE_REGISTERED(SearchApplication);
 
 TypeId SearchApplication::GetTypeId() {
+	NS_LOG_FUNCTION_NOARGS();
 	static TypeId typeId = TypeId("SearchApplication")
 		.SetParent<Application>()
 		.AddConstructor<SearchApplication>();
@@ -14,12 +17,15 @@ TypeId SearchApplication::GetTypeId() {
 }
 
 SearchApplication::SearchApplication() {
+	NS_LOG_FUNCTION(this);
 }
 
 SearchApplication::~SearchApplication() {
+	NS_LOG_FUNCTION(this);
 }
 
 void SearchApplication::DoInitialize() {
+	NS_LOG_FUNCTION(this);
 	pthread_mutex_init(&mutex, NULL);
 	routeManager = DynamicCast<RouteApplication>(GetNode()->GetApplication(4));
 	serviceManager = DynamicCast<ServiceApplication>(GetNode()->GetApplication(5));
@@ -36,6 +42,7 @@ void SearchApplication::DoInitialize() {
 }
 
 void SearchApplication::DoDispose() {
+	NS_LOG_FUNCTION(this);
 	if(socket != NULL) {
 		socket->Close();
 	}
@@ -44,16 +51,19 @@ void SearchApplication::DoDispose() {
 }
 
 void SearchApplication::StartApplication() {
+	NS_LOG_FUNCTION(this);
 	socket->SetRecvCallback(MakeCallback(&SearchApplication::ReceiveMessage, this));
 }
 
 void SearchApplication::StopApplication() {
+	NS_LOG_FUNCTION(this);
 	if(socket != NULL) {
 		socket->SetRecvCallback(MakeNullCallback<void, Ptr<Socket> >());
 	}
 }
 
 SearchResponseHeader SearchApplication::SelectBestResponse(std::list<SearchResponseHeader> responses) {
+	NS_LOG_FUNCTION(&responses);
 	SearchResponseHeader response;
 	SearchResponseHeader bestResponse = responses.front();
 	responses.pop_front();
@@ -76,6 +86,7 @@ SearchResponseHeader SearchApplication::SelectBestResponse(std::list<SearchRespo
 }
 
 void SearchApplication::CreateAndSendRequest() {
+	NS_LOG_FUNCTION(this);
 	SearchRequestHeader request = CreateRequest();
 	seenRequests[GetRequestKey(request)] = request.GetCurrentHops();
 	SendRequest(request);
@@ -87,6 +98,7 @@ void SearchApplication::CreateAndSendRequest() {
 }
 
 void SearchApplication::ReceiveMessage(Ptr<Socket> socket) {
+	NS_LOG_FUNCTION(this << socket);
 	Address sourceAddress;
 	Ptr<Packet> packet = socket->RecvFrom(sourceAddress);
 	InetSocketAddress inetSourceAddress = InetSocketAddress::ConvertFrom(sourceAddress);
@@ -112,6 +124,7 @@ void SearchApplication::ReceiveMessage(Ptr<Socket> socket) {
 }
 
 void SearchApplication::SendBroadcastMessage(Ptr<Packet> packet) {
+	NS_LOG_FUNCTION(this << packet);
 	InetSocketAddress remote = InetSocketAddress(Ipv4Address::GetBroadcast(), SEARCH_PORT);
 	socket->SetAllowBroadcast(true);
 	socket->Connect(remote);
@@ -119,6 +132,7 @@ void SearchApplication::SendBroadcastMessage(Ptr<Packet> packet) {
 }
 
 bool SearchApplication::IsValidRequest(SearchRequestHeader request) {
+	NS_LOG_FUNCTION(this << request);
 	POSITION requesterPosition = request.GetRequestPosition();
 	POSITION myPosition = positionManager->GetCurrentPosition();
 	double distance = PositionApplication::CalculateDistanceFromTo(requesterPosition, myPosition);
@@ -135,6 +149,7 @@ bool SearchApplication::IsValidRequest(SearchRequestHeader request) {
 }
 
 void SearchApplication::SendUnicastMessage(Ptr<Packet> packet, uint destinationAddress) {
+	NS_LOG_FUNCTION(this << packet << destinationAddress);
 	InetSocketAddress remote = InetSocketAddress(Ipv4Address(destinationAddress), SEARCH_PORT);
 	socket->SetAllowBroadcast(false);
 	socket->Connect(remote);
@@ -155,6 +170,7 @@ SearchRequestHeader SearchApplication::CreateRequest() {
 }
 
 void SearchApplication::SendRequest(SearchRequestHeader requestHeader) {
+	NS_LOG_FUNCTION(this << requestHeader);
 	Ptr<Packet> packet = Create<Packet>();
 	packet->AddHeader(requestHeader);
 	TypeHeader typeHeader(STRATOS_SEARCH_REQUEST);
@@ -165,6 +181,7 @@ void SearchApplication::SendRequest(SearchRequestHeader requestHeader) {
 }
 
 void SearchApplication::ForwardRequest(SearchRequestHeader requestHeader) {
+	NS_LOG_FUNCTION(this << requestHeader);
 	Ptr<Packet> packet = Create<Packet>();
 	packet->AddHeader(requestHeader);
 	TypeHeader typeHeader(STRATOS_SEARCH_REQUEST);
@@ -178,6 +195,7 @@ void SearchApplication::ForwardRequest(SearchRequestHeader requestHeader) {
 }
 
 void SearchApplication::ReceiveRequest(Ptr<Packet> packet, uint senderAddress) {
+	NS_LOG_FUNCTION(this << packet << senderAddress);
 	SearchRequestHeader requestHeader;
 	packet->RemoveHeader(requestHeader);
 	requestHeader.SetCurrentHops(requestHeader.GetCurrentHops() + 1);
@@ -204,12 +222,14 @@ void SearchApplication::ReceiveRequest(Ptr<Packet> packet, uint senderAddress) {
 }
 
 std::pair<uint, double> SearchApplication::GetRequestKey(SearchRequestHeader request) {
+	NS_LOG_FUNCTION(this << request);
 	uint address = request.GetRequestAddress().Get();
 	double timestamp = request.GetRequestTimestamp();
 	return std::make_pair(address, timestamp);
 }
 
 void SearchApplication::ReceiveError(Ptr<Packet> packet, uint senderAddress) {
+	NS_LOG_FUNCTION(this << packet << senderAddress);
 	SearchErrorHeader errorHeader;
 	packet->RemoveHeader(errorHeader);
 	pthread_mutex_lock(&mutex);
@@ -220,6 +240,7 @@ void SearchApplication::ReceiveError(Ptr<Packet> packet, uint senderAddress) {
 }
 
 SearchErrorHeader SearchApplication::CreateError(SearchRequestHeader request) {
+	NS_LOG_FUNCTION(this << request);
 	SearchErrorHeader error;
 	error.SetRequestAddress(request.GetRequestAddress());
 	error.SetRequestTimestamp(request.GetRequestTimestamp());
@@ -227,12 +248,14 @@ SearchErrorHeader SearchApplication::CreateError(SearchRequestHeader request) {
 }
 
 std::pair<uint, double> SearchApplication::GetRequestKey(SearchErrorHeader error) {
+	NS_LOG_FUNCTION(this << error);
 	uint address = error.GetRequestAddress().Get();
 	double timestamp = error.GetRequestTimestamp();
 	return std::make_pair(address, timestamp);
 }
 
 void SearchApplication::SendError(SearchErrorHeader errorHeader, uint receiverAddress) {
+	NS_LOG_FUNCTION(this << errorHeader << receiverAddress);
 	Ptr<Packet> packet = Create<Packet>();
 	packet->AddHeader(errorHeader);
 	TypeHeader typeHeader(STRATOS_SEARCH_ERROR);
@@ -241,10 +264,12 @@ void SearchApplication::SendError(SearchErrorHeader errorHeader, uint receiverAd
 }
 
 void SearchApplication::CreateAndSendError(SearchRequestHeader request, uint senderAddress) {
+	NS_LOG_FUNCTION(this << request << senderAddress);
 	SendError(CreateError(request), senderAddress);
 }
 
 void SearchApplication::SaveResponse(SearchResponseHeader response) {
+	NS_LOG_FUNCTION(this << response);
 	pthread_mutex_lock(&mutex);
 	std::list<SearchResponseHeader> responses = this->responses[GetRequestKey(response)];
 	responses.push_back(response);
@@ -253,6 +278,7 @@ void SearchApplication::SaveResponse(SearchResponseHeader response) {
 }
 
 void SearchApplication::VerifyResponses(std::pair<uint, double> request) {
+	NS_LOG_FUNCTION(this << &request);
 	bool found;
 	std::list<uint>::iterator i;
 	std::list<uint>::iterator j;
@@ -284,10 +310,12 @@ void SearchApplication::VerifyResponses(std::pair<uint, double> request) {
 }
 
 void SearchApplication::CreateAndSaveResponse(SearchRequestHeader request) {
+	NS_LOG_FUNCTION(this << request);
 	SaveResponse(CreateResponse(request));
 }
 
 void SearchApplication::ReceiveResponse(Ptr<Packet> packet, uint senderAddress) {
+	NS_LOG_FUNCTION(this << packet << senderAddress);
 	SearchResponseHeader responseHeader;
 	packet->RemoveHeader(responseHeader);
 	pthread_mutex_lock(&mutex);
@@ -303,6 +331,7 @@ void SearchApplication::ReceiveResponse(Ptr<Packet> packet, uint senderAddress) 
 }
 
 void SearchApplication::SelectAndSendBestResponse(std::pair<uint, double> request) {
+	NS_LOG_FUNCTION(this << &request);
 	pthread_mutex_lock(&mutex);
 	std::list<SearchResponseHeader> responses = this->responses[request];
 	pthread_mutex_unlock(&mutex);
@@ -319,6 +348,7 @@ void SearchApplication::SelectAndSendBestResponse(std::pair<uint, double> reques
 }
 
 SearchResponseHeader SearchApplication::CreateResponse(SearchRequestHeader request) {
+	NS_LOG_FUNCTION(this << request);
 	POSITION requester = request.GetRequestPosition();
 	POSITION me = positionManager->GetCurrentPosition();
 	double distance = PositionApplication::CalculateDistanceFromTo(requester, me);
@@ -333,12 +363,14 @@ SearchResponseHeader SearchApplication::CreateResponse(SearchRequestHeader reque
 }
 
 std::pair<uint, double> SearchApplication::GetRequestKey(SearchResponseHeader response) {
+	NS_LOG_FUNCTION(this << response);
 	uint address = response.GetRequestAddress().Get();
 	double timestamp = response.GetRequestTimestamp();
 	return std::make_pair(address, timestamp);
 }
 
 void SearchApplication::SendResponse(SearchResponseHeader responseHeader, uint parent) {
+	NS_LOG_FUNCTION(this << responseHeader << parent);
 	Ptr<Packet> packet = Create<Packet>();
 	packet->AddHeader(responseHeader);
 	TypeHeader typeHeader(STRATOS_SEARCH_RESPONSE);
@@ -347,5 +379,6 @@ void SearchApplication::SendResponse(SearchResponseHeader responseHeader, uint p
 }
 
 SearchHelper::SearchHelper() {
+	NS_LOG_FUNCTION(this);
 	objectFactory.SetTypeId("SearchApplication");
 }
