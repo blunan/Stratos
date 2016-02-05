@@ -215,24 +215,25 @@ void SearchApplication::ReceiveRequest(Ptr<Packet> packet, uint senderAddress) {
 	packet->RemoveHeader(requestHeader);
 	requestHeader.SetCurrentHops(requestHeader.GetCurrentHops() + 1);
 	pthread_mutex_lock(&mutex);
+	std::pair<uint, double> requestKey = GetRequestKey(requestHeader);
 	if(!IsValidRequest(requestHeader)) {
 		NS_LOG_DEBUG(localAddress << " -> Request from " << Ipv4Address(senderAddress) << " is invalid: " << requestHeader);
-		if(requestHeader.GetCurrentHops() < seenRequests[GetRequestKey(requestHeader)]) {
+		if(requestHeader.GetCurrentHops() < seenRequests[requestKey]) {
 			NS_LOG_DEBUG(localAddress << " -> " << Ipv4Address(senderAddress) << " is possibly my ancestor, send error: " << requestHeader);
 			CreateAndSendError(requestHeader, senderAddress);
-		} else if(requestHeader.GetCurrentHops() == (seenRequests[GetRequestKey(requestHeader)] + 2)) {
+		} else if(requestHeader.GetCurrentHops() == (seenRequests[requestKey] + 2)) {
 			NS_LOG_DEBUG(localAddress << " -> " << Ipv4Address(senderAddress) << " is possibly my son, wai for his response: " << requestHeader);
-			std::list<uint> pending = pendings[GetRequestKey(requestHeader)];
+			std::list<uint> pending = pendings[requestKey];
 			pending.push_back(senderAddress);
-			pendings[GetRequestKey(requestHeader)] = pending;
+			pendings[requestKey] = pending;
 			NS_LOG_INFO(localAddress << " hasSon " << Ipv4Address(senderAddress));
 		}
 		pthread_mutex_unlock(&mutex);
 		return;
 	}
-	parents[GetRequestKey(requestHeader)] = senderAddress;
+	parents[requestKey] = senderAddress;
 	NS_LOG_DEBUG(localAddress << " -> " << Ipv4Address(senderAddress) << " is parent for this request: " << requestHeader);
-	seenRequests[GetRequestKey(requestHeader)] = requestHeader.GetCurrentHops();
+	seenRequests[requestKey] = requestHeader.GetCurrentHops();
 	routeManager->SetAsRouteTo(senderAddress, requestHeader.GetRequestAddress().Get());
 	pthread_mutex_unlock(&mutex);
 	NS_LOG_INFO(localAddress << " hasParent " << Ipv4Address(senderAddress));
@@ -252,10 +253,11 @@ void SearchApplication::ReceiveError(Ptr<Packet> packet, uint senderAddress) {
 	NS_LOG_FUNCTION(this << packet << senderAddress);
 	SearchErrorHeader errorHeader;
 	packet->RemoveHeader(errorHeader);
+	std::pair<uint, double> requestKey = GetRequestKey(errorHeader);
 	pthread_mutex_lock(&mutex);
-	std::list<uint> pending = pendings[GetRequestKey(errorHeader)];
+	std::list<uint> pending = pendings[requestKey];
 	pending.remove(senderAddress);
-	pendings[GetRequestKey(errorHeader)] = pending;
+	pendings[requestKey] = pending;
 	NS_LOG_DEBUG(localAddress << " -> " << Ipv4Address(senderAddress) << " has been remoed from possible sons " << errorHeader);
 	pthread_mutex_unlock(&mutex);
 }
@@ -293,10 +295,11 @@ void SearchApplication::CreateAndSendError(SearchRequestHeader request, uint sen
 
 void SearchApplication::SaveResponse(SearchResponseHeader response) {
 	NS_LOG_FUNCTION(this << response);
+	std::pair<uint, double> requestKey = GetRequestKey(response);
 	pthread_mutex_lock(&mutex);
-	std::list<SearchResponseHeader> responses = this->responses[GetRequestKey(response)];
+	std::list<SearchResponseHeader> responses = this->responses[requestKey];
 	responses.push_back(response);
-	this->responses[GetRequestKey(response)] = responses;
+	this->responses[requestKey] = responses;
 	pthread_mutex_unlock(&mutex);
 	NS_LOG_DEBUG(localAddress << " -> Saved response: " << response);
 }
@@ -349,14 +352,15 @@ void SearchApplication::ReceiveResponse(Ptr<Packet> packet, uint senderAddress) 
 	SearchResponseHeader responseHeader;
 	packet->RemoveHeader(responseHeader);
 	NS_LOG_DEBUG(localAddress << " -> Received response: " << responseHeader);
+	std::pair<uint, double> requestKey = GetRequestKey(responseHeader);
 	pthread_mutex_lock(&mutex);
-	std::list<SearchResponseHeader> responses = this->responses[GetRequestKey(responseHeader)];
+	std::list<SearchResponseHeader> responses = this->responses[requestKey];
 	responses.push_back(responseHeader);
-	this->responses[GetRequestKey(responseHeader)] = responses;
-	std::list<uint> pending = pendings[GetRequestKey(responseHeader)];
+	this->responses[requestKey] = responses;
+	std::list<uint> pending = pendings[requestKey];
 	pending.remove(senderAddress);
 	NS_LOG_DEBUG(localAddress << " -> Remove " << Ipv4Address(senderAddress) << " from pendings: " << responseHeader);
-	pendings[GetRequestKey(responseHeader)] = pending;
+	pendings[requestKey] = pending;
 	pthread_mutex_unlock(&mutex);
 	routeManager->SetAsRouteTo(senderAddress, responseHeader.GetResponseAddress().Get());
 	NS_LOG_INFO(localAddress << " removeSon " << Ipv4Address(senderAddress));
