@@ -68,16 +68,20 @@ SearchResponseHeader SearchApplication::SelectBestResponse(std::list<SearchRespo
 	SearchResponseHeader bestResponse = responses.front();
 	responses.pop_front();
 	std::list<SearchResponseHeader>::iterator i;
+	NS_LOG_DEBUG("Best response is: " << bestResponse);
 	for(i = responses.begin(); i != responses.end(); i++) {
 		response = *i;
 		if(response.GetOfferedService().semanticDistance < bestResponse.GetOfferedService().semanticDistance) {
 			bestResponse = response;
+			NS_LOG_DEBUG("New best response selected by semantic distance: " << bestResponse);
 		} else if(response.GetOfferedService().semanticDistance == bestResponse.GetOfferedService().semanticDistance) {
 			if(response.GetHopDistance() < bestResponse.GetHopDistance()) {
 				bestResponse = response;
+				NS_LOG_DEBUG("New best response selected by hop distance: " << bestResponse);
 			} else if(response.GetHopDistance() == bestResponse.GetHopDistance()) {
 				if(response.GetResponseAddress() < bestResponse.GetResponseAddress()) {
 					bestResponse = response;
+					NS_LOG_DEBUG("New best response selected by address: " << bestResponse);
 				}
 			}
 		}
@@ -106,8 +110,10 @@ void SearchApplication::ReceiveMessage(Ptr<Socket> socket) {
 	TypeHeader typeHeader;
 	packet->RemoveHeader(typeHeader);
 	if(!typeHeader.IsValid()) {
+		NS_LOG_DEBUG(localAddress << " - > Received search message from " << senderAddress << " is invalid");
 		return;
 	}
+	NS_LOG_DEBUG(localAddress << " - > Received search message from " << senderAddress);
 	switch(typeHeader.GetType()) {
 		case STRATOS_SEARCH_ERROR:
 			ReceiveError(packet, senderAddress.Get());
@@ -137,12 +143,15 @@ bool SearchApplication::IsValidRequest(SearchRequestHeader request) {
 	POSITION myPosition = positionManager->GetCurrentPosition();
 	double distance = PositionApplication::CalculateDistanceFromTo(requesterPosition, myPosition);
 	if(seenRequests.find(GetRequestKey(request)) != seenRequests.end()) {
+		NS_LOG_DEBUG(localAddress << " - > Request has been seen before");
 		return false;
 	}
 	if(request.GetCurrentHops() > request.GetMaxHopsAllowed()) {
+		NS_LOG_DEBUG(localAddress << " - > Request exceeds max hops allowed");
 		return false;
 	}
 	if(distance > request.GetMaxDistanceAllowed()) {
+		NS_LOG_DEBUG(localAddress << " - > Request exceeds max distance allowed");
 		return false;
 	}
 	return true;
@@ -157,6 +166,7 @@ void SearchApplication::SendUnicastMessage(Ptr<Packet> packet, uint destinationA
 }
 
 SearchRequestHeader SearchApplication::CreateRequest() {
+	NS_LOG_FUNCTION(this);
 	SearchRequestHeader request;
 	request.SetCurrentHops(0);
 	request.SetMaxHopsAllowed(MAX_HOPS);
@@ -166,6 +176,7 @@ SearchRequestHeader SearchApplication::CreateRequest() {
 	request.SetRequestPosition(positionManager->GetCurrentPosition());
 	request.SetRequestedService(OntologyApplication::GetRandomService());
 	request.SetMaxDistanceAllowed(Utilities::Random(MIN_REQUEST_DISTANCE, MAX_REQUEST_DISTANCE));
+	NS_LOG_DEBUG(localAddress << " -> Request created: " << request);
 	return request;
 }
 
@@ -175,9 +186,10 @@ void SearchApplication::SendRequest(SearchRequestHeader requestHeader) {
 	packet->AddHeader(requestHeader);
 	TypeHeader typeHeader(STRATOS_SEARCH_REQUEST);
 	packet->AddHeader(typeHeader);
+	NS_LOG_DEBUG(localAddress << " -> Send request: " << requestHeader);
 	Simulator::Schedule(Seconds(Utilities::GetJitter()), &SearchApplication::SendBroadcastMessage, this, packet);
+	NS_LOG_DEBUG(localAddress << " -> Schedule request for verify: " << requestHeader);
 	Simulator::Schedule(Seconds(VERIFY_TIME), &SearchApplication::VerifyResponses, this, GetRequestKey(requestHeader));
-	//std::cout << requestHeader << std::endl;
 }
 
 void SearchApplication::ForwardRequest(SearchRequestHeader requestHeader) {
@@ -187,9 +199,12 @@ void SearchApplication::ForwardRequest(SearchRequestHeader requestHeader) {
 	TypeHeader typeHeader(STRATOS_SEARCH_REQUEST);
 	packet->AddHeader(typeHeader);
 	Simulator::Schedule(Seconds(Utilities::GetJitter()), &SearchApplication::SendBroadcastMessage, this, packet);
+	NS_LOG_DEBUG(localAddress << " -> Request scheduled to forward: " << requestHeader);
 	if(requestHeader.GetCurrentHops() == requestHeader.GetMaxHopsAllowed()) {
+		NS_LOG_DEBUG(localAddress << " -> I'm leaf for this request, verify responses (only mine) now: " << requestHeader);
 		VerifyResponses(GetRequestKey(requestHeader));
 	} else {
+		NS_LOG_DEBUG(localAddress << " -> Schedule request for verify: " << requestHeader);
 		Simulator::Schedule(Seconds(VERIFY_TIME), &SearchApplication::VerifyResponses, this, GetRequestKey(requestHeader));
 	}
 }
@@ -201,22 +216,26 @@ void SearchApplication::ReceiveRequest(Ptr<Packet> packet, uint senderAddress) {
 	requestHeader.SetCurrentHops(requestHeader.GetCurrentHops() + 1);
 	pthread_mutex_lock(&mutex);
 	if(!IsValidRequest(requestHeader)) {
+		NS_LOG_DEBUG(localAddress << " -> Request from " << Ipv4Address(senderAddress) << " is invalid: " << requestHeader);
 		if(requestHeader.GetCurrentHops() < seenRequests[GetRequestKey(requestHeader)]) {
+			NS_LOG_DEBUG(localAddress << " -> " << Ipv4Address(senderAddress) << " is possibly my ancestor, send error: " << requestHeader);
 			CreateAndSendError(requestHeader, senderAddress);
 		} else if(requestHeader.GetCurrentHops() == (seenRequests[GetRequestKey(requestHeader)] + 2)) {
-			//std::cout << localAddress << " -> " << Ipv4Address(senderAddress) << std::endl;
+			NS_LOG_DEBUG(localAddress << " -> " << Ipv4Address(senderAddress) << " is possibly my son, wai for his response: " << requestHeader);
 			std::list<uint> pending = pendings[GetRequestKey(requestHeader)];
 			pending.push_back(senderAddress);
 			pendings[GetRequestKey(requestHeader)] = pending;
+			NS_LOG_INFO(localAddress << " hasSon " << Ipv4Address(senderAddress));
 		}
 		pthread_mutex_unlock(&mutex);
 		return;
 	}
 	parents[GetRequestKey(requestHeader)] = senderAddress;
+	NS_LOG_DEBUG(localAddress << " -> " << Ipv4Address(senderAddress) << " is parent for this request: " << requestHeader);
 	seenRequests[GetRequestKey(requestHeader)] = requestHeader.GetCurrentHops();
 	routeManager->SetAsRouteTo(senderAddress, requestHeader.GetRequestAddress().Get());
 	pthread_mutex_unlock(&mutex);
-	//std::cout << Ipv4Address(senderAddress) << " <- " << localAddress << std::endl;
+	NS_LOG_INFO(localAddress << " hasParent " << Ipv4Address(senderAddress));
 	CreateAndSaveResponse(requestHeader);
 	ForwardRequest(requestHeader);
 }
@@ -225,6 +244,7 @@ std::pair<uint, double> SearchApplication::GetRequestKey(SearchRequestHeader req
 	NS_LOG_FUNCTION(this << request);
 	uint address = request.GetRequestAddress().Get();
 	double timestamp = request.GetRequestTimestamp();
+	NS_LOG_DEBUG(localAddress << " -> Key from request is [" << address << ", " << timestamp << "] " << request);
 	return std::make_pair(address, timestamp);
 }
 
@@ -236,6 +256,7 @@ void SearchApplication::ReceiveError(Ptr<Packet> packet, uint senderAddress) {
 	std::list<uint> pending = pendings[GetRequestKey(errorHeader)];
 	pending.remove(senderAddress);
 	pendings[GetRequestKey(errorHeader)] = pending;
+	NS_LOG_DEBUG(localAddress << " -> " << Ipv4Address(senderAddress) << " has been remoed from possible sons " << errorHeader);
 	pthread_mutex_unlock(&mutex);
 }
 
@@ -244,6 +265,7 @@ SearchErrorHeader SearchApplication::CreateError(SearchRequestHeader request) {
 	SearchErrorHeader error;
 	error.SetRequestAddress(request.GetRequestAddress());
 	error.SetRequestTimestamp(request.GetRequestTimestamp());
+	NS_LOG_DEBUG(localAddress << " -> Error created: " << error);
 	return error;
 }
 
@@ -251,6 +273,7 @@ std::pair<uint, double> SearchApplication::GetRequestKey(SearchErrorHeader error
 	NS_LOG_FUNCTION(this << error);
 	uint address = error.GetRequestAddress().Get();
 	double timestamp = error.GetRequestTimestamp();
+	NS_LOG_DEBUG(localAddress << " -> Key from error is [" << address << ", " << timestamp << "] " << error);
 	return std::make_pair(address, timestamp);
 }
 
@@ -275,6 +298,7 @@ void SearchApplication::SaveResponse(SearchResponseHeader response) {
 	responses.push_back(response);
 	this->responses[GetRequestKey(response)] = responses;
 	pthread_mutex_unlock(&mutex);
+	NS_LOG_DEBUG(localAddress << " -> Saved response: " << response);
 }
 
 void SearchApplication::VerifyResponses(std::pair<uint, double> request) {
@@ -287,14 +311,17 @@ void SearchApplication::VerifyResponses(std::pair<uint, double> request) {
 	std::list<uint> neighborhood = neighborhoodManager->GetNeighborhood();
 	for(i = pending.begin(); i != pending.end(); i++) {
 		found = false;
+		NS_LOG_DEBUG(localAddress << " -> Searching for " << Ipv4Address(*i) << " in neighborhood for [" << request.first << ", " << request.second << "]");
 		for(j = neighborhood.begin(); j != neighborhood.end(); j++) {
 			if((*i) == (*j)) {
 				found = true;
+				NS_LOG_DEBUG(localAddress << " -> " << Ipv4Address(*i) << " is in neighborhood for [" << request.first << ", " << request.second << "] wair for it's response");
 				break;
 			}
 		}
 		if(!found) {
 			pending.erase(i--);
+			NS_LOG_DEBUG(localAddress << " -> " << Ipv4Address(*i) << " is not in neighborhood for [" << request.first << ", " << request.second << "] and has been deleated from pending responses");
 		}
 	}
 	pendings[request] = pending;
@@ -302,9 +329,12 @@ void SearchApplication::VerifyResponses(std::pair<uint, double> request) {
 	int hops = seenRequests[request];
 	double maxSecondsWait = (double) ((MAX_HOPS - hops) * VERIFY_TIME);
 	double secondsElapsed = (Now().GetMilliSeconds() - request.second) / 1000;
+	NS_LOG_DEBUG(localAddress << " -> [" << request.first << ", " << request.second << "] hops = " << hops << ", maxWaitSeconds = " << maxSecondsWait << ", secondsElapsed = " << secondsElapsed << " [" << request.first << ", " << request.second << "]");
 	if(pending.empty() || secondsElapsed >= maxSecondsWait) {
+		NS_LOG_DEBUG(localAddress << " -> Either I'm not waiting for a response of one of my sons or max expansion time has been reached for [" << request.first << ", " << request.second << "]");
 		SelectAndSendBestResponse(request);
 	} else {
+		NS_LOG_DEBUG(localAddress << " -> Verify [" << request.first << ", " << request.second << "] again in " << VERIFY_TIME << "s");
 		Simulator::Schedule(Seconds(VERIFY_TIME), &SearchApplication::VerifyResponses, this, request);
 	}
 }
@@ -318,16 +348,18 @@ void SearchApplication::ReceiveResponse(Ptr<Packet> packet, uint senderAddress) 
 	NS_LOG_FUNCTION(this << packet << senderAddress);
 	SearchResponseHeader responseHeader;
 	packet->RemoveHeader(responseHeader);
+	NS_LOG_DEBUG(localAddress << " -> Received response: " << responseHeader);
 	pthread_mutex_lock(&mutex);
 	std::list<SearchResponseHeader> responses = this->responses[GetRequestKey(responseHeader)];
 	responses.push_back(responseHeader);
 	this->responses[GetRequestKey(responseHeader)] = responses;
 	std::list<uint> pending = pendings[GetRequestKey(responseHeader)];
 	pending.remove(senderAddress);
+	NS_LOG_DEBUG(localAddress << " -> Remove " << Ipv4Address(senderAddress) << " from pendings: " << responseHeader);
 	pendings[GetRequestKey(responseHeader)] = pending;
 	pthread_mutex_unlock(&mutex);
 	routeManager->SetAsRouteTo(senderAddress, responseHeader.GetResponseAddress().Get());
-	//std::cout << localAddress << " <-> " << Ipv4Address(senderAddress) << std::endl;
+	NS_LOG_INFO(localAddress << " removeSon " << Ipv4Address(senderAddress));
 }
 
 void SearchApplication::SelectAndSendBestResponse(std::pair<uint, double> request) {
@@ -336,13 +368,16 @@ void SearchApplication::SelectAndSendBestResponse(std::pair<uint, double> reques
 	std::list<SearchResponseHeader> responses = this->responses[request];
 	pthread_mutex_unlock(&mutex);
 	if(responses.empty() && request.first == localAddress.Get()) {
-		//std::cout << Now().GetMilliSeconds() << " -> Search response to " << localAddress << " no responses for request" << std::endl;
+		NS_LOG_DEBUG(localAddress << " -> There are no responses for request [" << request.first << ", " << request.second << "] and I'm the initiator");
 		return;
 	}
 	SearchResponseHeader response = SelectBestResponse(responses);
+	NS_LOG_DEBUG(localAddress << " -> Best reponse is: " << response);
 	if(response.GetRequestAddress() == localAddress) {
+		NS_LOG_DEBUG(localAddress << " -> Start schedule for " << response);
 		scheduleManager->CreateAndExecuteSchedule(responses);
 	} else {
+		NS_LOG_DEBUG(localAddress << " -> Send to parent: " << response);
 		SendResponse(response, parents[request]);
 	}
 }
@@ -359,6 +394,7 @@ SearchResponseHeader SearchApplication::CreateResponse(SearchRequestHeader reque
 	response.SetRequestAddress(request.GetRequestAddress());
 	response.SetRequestTimestamp(request.GetRequestTimestamp());
 	response.SetOfferedService(ontologyManager->GetBestOfferedService(request.GetRequestedService()));
+	NS_LOG_DEBUG(localAddress << " -> Response created: " << response);
 	return response;
 }
 
@@ -366,6 +402,7 @@ std::pair<uint, double> SearchApplication::GetRequestKey(SearchResponseHeader re
 	NS_LOG_FUNCTION(this << response);
 	uint address = response.GetRequestAddress().Get();
 	double timestamp = response.GetRequestTimestamp();
+	NS_LOG_DEBUG(localAddress << " -> Key from response is [" << address << ", " << timestamp << "] " << response);
 	return std::make_pair(address, timestamp);
 }
 
