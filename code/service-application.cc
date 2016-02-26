@@ -71,7 +71,7 @@ void ServiceApplication::CreateAndSendRequest(Ipv4Address destinationAddress, st
 	std::pair<uint, std::string> key = GetDestinationKey(request);
 	maxPackets[key] = requestPackets;
 	status[key] = STRATOS_START_SERVICE;
-	NS_LOG_DEBUG(localAddress << " -> Service for " << destinationAddress << " is in " << STRATOS_START_SERVICE << " state");
+	NS_LOG_DEBUG(localAddress << " -> Service for " << destinationAddress << " requesting " << requestPackets << " packets is in state " << STRATOS_START_SERVICE);
 }
 
 void ServiceApplication::ReceiveMessage(Ptr<Socket> socket) {
@@ -80,8 +80,10 @@ void ServiceApplication::ReceiveMessage(Ptr<Socket> socket) {
 	TypeHeader typeHeader;
 	packet->RemoveHeader(typeHeader);
 	if(!typeHeader.IsValid()) {
+		NS_LOG_DEBUG(localAddress << " -> Received service message is invalid");
 		return;
 	}
+	NS_LOG_DEBUG(localAddress << " -> Processing service message");
 	switch(typeHeader.GetType()) {
 		case STRATOS_SERVICE_ERROR:
 			ReceiveError(packet);
@@ -93,13 +95,15 @@ void ServiceApplication::ReceiveMessage(Ptr<Socket> socket) {
 			ReceiveResponse(packet);
 			break;
 		default:
+			NS_LOG_WARN(localAddress << " -> Service message is unknown!");
 			break;
 	}
 }
 
 void ServiceApplication::CancelService(std::pair<uint, std::string> key) {
 	NS_LOG_FUNCTION(this << &key);
-	// TODO why the key
+	status[key] = STRATOS_SERVICE_STOPPED;
+	NS_LOG_DEBUG(localAddress << " -> Service for " << key.first << " is in state " << STRATOS_SERVICE_STOPPED);
 	scheduleManager->ContinueSchedule();
 }
 
@@ -114,6 +118,7 @@ std::pair<uint, std::string> ServiceApplication::GetSenderKey(ServiceErrorHeader
 	NS_LOG_FUNCTION(this << errorHeader);
 	std::string service = errorHeader.GetService();
 	uint senderAddress = errorHeader.GetSenderAddress().Get();
+	NS_LOG_DEBUG(localAddress << " -> Sender key from error is [" << senderAddress << ", " << service << "] " << errorHeader);
 	return std::make_pair(senderAddress, service);
 }
 
@@ -121,6 +126,7 @@ std::pair<uint, std::string> ServiceApplication::GetSenderKey(ServiceRequestResp
 	NS_LOG_FUNCTION(this << requestResponse);
 	std::string service = requestResponse.GetService();
 	uint senderAddress = requestResponse.GetSenderAddress().Get();
+	NS_LOG_DEBUG(localAddress << " -> Sender key is [" << senderAddress << ", " << service << "] " << requestResponse);
 	return std::make_pair(senderAddress, service);
 }
 
@@ -128,6 +134,7 @@ std::pair<uint, std::string> ServiceApplication::GetDestinationKey(ServiceReques
 	NS_LOG_FUNCTION(this << requestResponse);
 	std::string service = requestResponse.GetService();
 	uint destinationAddress = requestResponse.GetDestinationAddress().Get();
+	NS_LOG_DEBUG(localAddress << " -> Destination key is [" << destinationAddress << ", " << service << "] " << requestResponse);
 	return std::make_pair(destinationAddress, service);
 }
 
