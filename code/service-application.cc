@@ -4,9 +4,12 @@
 #include "definitions.h"
 #include "type-header.h"
 
+NS_LOG_COMPONENT_DEFINE("ServiceApplication");
+
 NS_OBJECT_ENSURE_REGISTERED(ServiceApplication);
 
 TypeId ServiceApplication::GetTypeId() {
+	NS_LOG_FUNCTION_NOARGS();
 	static TypeId typeId = TypeId("ServiceApplication")
 		.SetParent<Application>()
 		.AddConstructor<ServiceApplication>()
@@ -19,12 +22,15 @@ TypeId ServiceApplication::GetTypeId() {
 }
 
 ServiceApplication::ServiceApplication() {
+	NS_LOG_FUNCTION(this);
 }
 
 ServiceApplication::~ServiceApplication() {
+	NS_LOG_FUNCTION(this);
 }
 
 void ServiceApplication::DoInitialize() {
+	NS_LOG_FUNCTION(this);
 	routeManager = DynamicCast<RouteApplication>(GetNode()->GetApplication(4));
 	resultsManager = DynamicCast<ResultsApplication>(GetNode()->GetApplication(7));
 	ontologyManager = DynamicCast<OntologyApplication>(GetNode()->GetApplication(1));
@@ -39,6 +45,7 @@ void ServiceApplication::DoInitialize() {
 }
 
 void ServiceApplication::DoDispose() {
+	NS_LOG_FUNCTION(this);
 	if(socket != NULL) {
 		socket->Close();
 	}
@@ -46,24 +53,29 @@ void ServiceApplication::DoDispose() {
 }
 
 void ServiceApplication::StartApplication() {
+	NS_LOG_FUNCTION(this);
 	socket->SetRecvCallback(MakeCallback(&ServiceApplication::ReceiveMessage, this));
 }
 
 void ServiceApplication::StopApplication() {
+	NS_LOG_FUNCTION(this);
 	if(socket != NULL) {
 		socket->SetRecvCallback(MakeNullCallback<void, Ptr<Socket> >());
 	}
 }
 
 void ServiceApplication::CreateAndSendRequest(Ipv4Address destinationAddress, std::string service, int requestPackets) {
+	NS_LOG_FUNCTION(this << destinationAddress << service << requestPackets);
 	ServiceRequestResponseHeader request = CreateRequest(destinationAddress, service);
 	SendRequest(request);
-	//std::cout << Utilities::GetCurrentRawDateTime() << " -> " << request << std::endl;
-	maxPackets[GetDestinationKey(request)] = requestPackets;
-	status[GetDestinationKey(request)] = STRATOS_START_SERVICE;
+	std::pair<uint, std::string> key = GetDestinationKey(request);
+	maxPackets[key] = requestPackets;
+	status[key] = STRATOS_START_SERVICE;
+	NS_LOG_DEBUG(localAddress << " -> Service for " << destinationAddress << " is in " << STRATOS_START_SERVICE << " state");
 }
 
 void ServiceApplication::ReceiveMessage(Ptr<Socket> socket) {
+	NS_LOG_FUNCTION(this << socket);
 	Ptr<Packet> packet = socket->Recv();
 	TypeHeader typeHeader;
 	packet->RemoveHeader(typeHeader);
@@ -86,34 +98,41 @@ void ServiceApplication::ReceiveMessage(Ptr<Socket> socket) {
 }
 
 void ServiceApplication::CancelService(std::pair<uint, std::string> key) {
+	NS_LOG_FUNCTION(this << &key);
+	// TODO why the key
 	scheduleManager->ContinueSchedule();
 }
 
 void ServiceApplication::SendUnicastMessage(Ptr<Packet> packet, uint destinationAddress) {
+	NS_LOG_FUNCTION(this << packet << destinationAddress);
 	InetSocketAddress remote = InetSocketAddress(Ipv4Address(destinationAddress), SERVICE_PORT);
 	socket->Connect(remote);
 	socket->Send(packet);
 }
 
 std::pair<uint, std::string> ServiceApplication::GetSenderKey(ServiceErrorHeader errorHeader) {
+	NS_LOG_FUNCTION(this << errorHeader);
 	std::string service = errorHeader.GetService();
 	uint senderAddress = errorHeader.GetSenderAddress().Get();
 	return std::make_pair(senderAddress, service);
 }
 
 std::pair<uint, std::string> ServiceApplication::GetSenderKey(ServiceRequestResponseHeader requestResponse) {
+	NS_LOG_FUNCTION(this << requestResponse);
 	std::string service = requestResponse.GetService();
 	uint senderAddress = requestResponse.GetSenderAddress().Get();
 	return std::make_pair(senderAddress, service);
 }
 
 std::pair<uint, std::string> ServiceApplication::GetDestinationKey(ServiceRequestResponseHeader requestResponse) {
+	NS_LOG_FUNCTION(this << requestResponse);
 	std::string service = requestResponse.GetService();
 	uint destinationAddress = requestResponse.GetDestinationAddress().Get();
 	return std::make_pair(destinationAddress, service);
 }
 
 void ServiceApplication::ReceiveRequest(Ptr<Packet> packet) {
+	NS_LOG_FUNCTION(this << packet);
 	ServiceRequestResponseHeader requestHeader;
 	packet->RemoveHeader(requestHeader);
 	if(requestHeader.GetDestinationAddress() != localAddress) {
@@ -162,6 +181,7 @@ void ServiceApplication::ReceiveRequest(Ptr<Packet> packet) {
 }
 
 void ServiceApplication::SendRequest(ServiceRequestResponseHeader requestHeader) {
+	NS_LOG_FUNCTION(this << requestHeader);
 	uint nextHop = routeManager->GetRouteTo(requestHeader.GetDestinationAddress().Get());
 	if(neighborhoodManager->IsInNeighborhood(nextHop)) {
 		//std::cout << requestHeader << std::endl;
@@ -177,6 +197,7 @@ void ServiceApplication::SendRequest(ServiceRequestResponseHeader requestHeader)
 }
 
 void ServiceApplication::ForwardRequest(ServiceRequestResponseHeader requestHeader) {
+	NS_LOG_FUNCTION(this << requestHeader);
 	uint nextHop = routeManager->GetRouteTo(requestHeader.GetDestinationAddress().Get());
 	if(neighborhoodManager->IsInNeighborhood(nextHop)) {
 		Ptr<Packet> packet = Create<Packet>(PACKET_LENGTH);
@@ -190,10 +211,12 @@ void ServiceApplication::ForwardRequest(ServiceRequestResponseHeader requestHead
 }
 
 void ServiceApplication::CreateAndSendRequest(ServiceRequestResponseHeader response, Flag flag) {
+	NS_LOG_FUNCTION(this << response << flag);
 	SendRequest(CreateRequest(response, flag));
 }
 
 ServiceRequestResponseHeader ServiceApplication::CreateRequest(ServiceRequestResponseHeader response, Flag flag) {
+	NS_LOG_FUNCTION(this << response << flag);
 	ServiceRequestResponseHeader request;
 	request.SetFlag(flag);
 	request.SetSenderAddress(localAddress);
@@ -203,6 +226,7 @@ ServiceRequestResponseHeader ServiceApplication::CreateRequest(ServiceRequestRes
 }
 
 ServiceRequestResponseHeader ServiceApplication::CreateRequest(Ipv4Address destinationAddress, std::string service) {
+	NS_LOG_FUNCTION(this << destinationAddress << service);
 	ServiceRequestResponseHeader request;
 	request.SetService(service);
 	request.SetFlag(STRATOS_START_SERVICE);
@@ -212,6 +236,7 @@ ServiceRequestResponseHeader ServiceApplication::CreateRequest(Ipv4Address desti
 }
 
 void ServiceApplication::ReceiveError(Ptr<Packet> packet) {
+	NS_LOG_FUNCTION(this << packet);
 	ServiceErrorHeader errorHeader;
 	packet->RemoveHeader(errorHeader);
 	if(errorHeader.GetDestinationAddress() == localAddress) {
@@ -222,6 +247,7 @@ void ServiceApplication::ReceiveError(Ptr<Packet> packet) {
 }
 
 void ServiceApplication::SendError(ServiceErrorHeader errorHeader) {
+	NS_LOG_FUNCTION(this << errorHeader);
 	uint nextHop = routeManager->GetRouteTo(errorHeader.GetDestinationAddress().Get());
 	if(neighborhoodManager->IsInNeighborhood(nextHop)) {
 		//std::cout << errorHeader << std::endl;
@@ -234,10 +260,12 @@ void ServiceApplication::SendError(ServiceErrorHeader errorHeader) {
 }
 
 void ServiceApplication::CreateAndSendError(ServiceRequestResponseHeader requestResponse) {
+	NS_LOG_FUNCTION(this << requestResponse);
 	SendError(CreateError(requestResponse));
 }
 
 ServiceErrorHeader ServiceApplication::CreateError(ServiceRequestResponseHeader requestResponse) {
+	NS_LOG_FUNCTION(this << requestResponse);
 	ServiceErrorHeader error;
 	error.SetService(requestResponse.GetService());
 	error.SetSenderAddress(requestResponse.GetDestinationAddress());
@@ -246,6 +274,7 @@ ServiceErrorHeader ServiceApplication::CreateError(ServiceRequestResponseHeader 
 }
 
 void ServiceApplication::ReceiveResponse(Ptr<Packet> packet) {
+	NS_LOG_FUNCTION(this << packet);
 	ServiceRequestResponseHeader responseHeader;
 	packet->RemoveHeader(responseHeader);
 	if(responseHeader.GetDestinationAddress() != localAddress) {
@@ -259,7 +288,7 @@ void ServiceApplication::ReceiveResponse(Ptr<Packet> packet) {
 	switch(responseHeader.GetFlag()) {
 		case STRATOS_SERVICE_STARTED:
 			if(currentStatus == STRATOS_START_SERVICE) {
-				flag = STRATOS_DO_SERVICE; 
+				flag = STRATOS_DO_SERVICE;
 				status[responser] = STRATOS_DO_SERVICE;
 				CreateAndSendRequest(responseHeader, flag);
 			} else {
@@ -290,6 +319,7 @@ void ServiceApplication::ReceiveResponse(Ptr<Packet> packet) {
 }
 
 void ServiceApplication::SendResponse(ServiceRequestResponseHeader responseHeader) {
+	NS_LOG_FUNCTION(this << responseHeader);
 	uint nextHop = routeManager->GetRouteTo(responseHeader.GetDestinationAddress().Get());
 	if(neighborhoodManager->IsInNeighborhood(nextHop)) {
 		//std::cout << responseHeader << std::endl;
@@ -305,6 +335,7 @@ void ServiceApplication::SendResponse(ServiceRequestResponseHeader responseHeade
 }
 
 void ServiceApplication::ForwardResponse(ServiceRequestResponseHeader responseHeader) {
+	NS_LOG_FUNCTION(this << responseHeader);
 	uint nextHop = routeManager->GetRouteTo(responseHeader.GetDestinationAddress().Get());
 	if(neighborhoodManager->IsInNeighborhood(nextHop)) {
 		Ptr<Packet> packet = Create<Packet>(PACKET_LENGTH);
@@ -318,10 +349,12 @@ void ServiceApplication::ForwardResponse(ServiceRequestResponseHeader responseHe
 }
 
 void ServiceApplication::CreateAndSendResponse(ServiceRequestResponseHeader request, Flag flag) {
+	NS_LOG_FUNCTION(this << request << flag);
 	SendResponse(CreateResponse(request, flag));
 }
 
 ServiceRequestResponseHeader ServiceApplication::CreateResponse(ServiceRequestResponseHeader request, Flag flag) {
+	NS_LOG_FUNCTION(this << request << flag);
 	ServiceRequestResponseHeader response;
 	response.SetFlag(flag);
 	response.SetSenderAddress(localAddress);
@@ -331,5 +364,6 @@ ServiceRequestResponseHeader ServiceApplication::CreateResponse(ServiceRequestRe
 }
 
 ServiceHelper::ServiceHelper() {
+	NS_LOG_FUNCTION(this);
 	objectFactory.SetTypeId("ServiceApplication");
 }
