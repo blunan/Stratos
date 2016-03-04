@@ -350,7 +350,7 @@ void ServiceApplication::ReceiveResponse(Ptr<Packet> packet) {
 					flag = STRATOS_STOP_SERVICE;
 					status[responser] = STRATOS_STOP_SERVICE;
 					NS_LOG_DEBUG(localAddress << " -> All data received from [" << responser.first << ", " << responser.second << "]");
-					NS_LOG_DEBUG(localAddress << " -> Service for [" << responser.first << ", " << responser.second << "] changes to state " << STRATOS_SERVICE_STOPPED);
+					NS_LOG_DEBUG(localAddress << " -> Service for [" << responser.first << ", " << responser.second << "] changes to state " << STRATOS_STOP_SERVICE);
 				}
 				CreateAndSendRequest(responseHeader, flag);
 			} else {

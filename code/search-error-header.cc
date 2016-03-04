@@ -17,7 +17,6 @@ TypeId SearchErrorHeader::GetInstanceTypeId() const {
 
 uint32_t SearchErrorHeader::GetSerializedSize() const {
 	return 8;
-
 }
 
 void SearchErrorHeader::Print(std::ostream &stream) const {
