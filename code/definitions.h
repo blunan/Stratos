@@ -20,10 +20,6 @@
 
 #define SERVICE_PORT 60002
 
-#define SENSING_TIME 60 //seconds
-
-#define SENSING_TIME 60 //seconds
-
 #define MAX_DISTANCE 1000 //meters
 
 #define PACKET_LENGTH 256 //bytes
@@ -34,8 +30,6 @@
 
 #define MAX_TIMES_NOT_SEEN 3
 
-//#define PACKET_SEND_DELAY 500 //ms
-
 #define MIN_REQUEST_DISTANCE 400
 
 #define MAX_REQUEST_DISTANCE 600
@@ -44,20 +38,20 @@
 
 #define TOTAL_NUMBER_OF_NODES 100
 
-typedef struct {
+struct POSITION {
 	double x;
 	double y;
-} POSITION;
+};
 
-typedef struct {
+struct NEIGHBOR {
 	uint address;
 	double lastSeen;
-} NEIGHBOR;
+};
 
-typedef struct {
+struct OFFERED_SERVICE {
 	std::string service;
 	int semanticDistance;
-} OFFERED_SERVICE;
+};
 
 enum MessageType {
 	STRATOS = 0,

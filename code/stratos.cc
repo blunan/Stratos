@@ -17,22 +17,33 @@
 #include "schedule-application.h"
 #include "neighborhood-application.h"
 
+NS_LOG_COMPONENT_DEFINE("Stratos");
+
 Stratos::Stratos(int argc, char *argv[]) {
+	NS_LOG_FUNCTION(this);
 	NUMBER_OF_MOBILE_NODES = 50; //0, 25, 50*, 100
 	NUMBER_OF_REQUESTER_NODES = 4; //1, 2, 4*, 8, 16, 24, 32
-	NUMBER_OF_PACKETS_TO_SEND = 10; //1, 10*, 20, 40, 60
+	NUMBER_OF_PACKETS_TO_SEND = 10; //10*, 20, 40, 60
 	NUMBER_OF_SERVICES_OFFERED = 2; //1, 2*, 4, 8
 
+	NS_LOG_INFO("Parsing argument values if any");
 	CommandLine cmd;
 	cmd.AddValue("nMobile", "Number of mobile nodes.", NUMBER_OF_MOBILE_NODES);
 	cmd.AddValue("nRequesters", "Number of requester nodes.", NUMBER_OF_REQUESTER_NODES);
 	cmd.AddValue("nPackets", "Number of service packets to send.", NUMBER_OF_PACKETS_TO_SEND);
 	cmd.AddValue("nServices", "Number of services offered by a node.", NUMBER_OF_SERVICES_OFFERED);
 	cmd.Parse(argc, argv);
+	NS_LOG_INFO("Number of mobile nodes = " << NUMBER_OF_MOBILE_NODES);
+	NS_LOG_INFO("Number of requester nodes = " << NUMBER_OF_REQUESTER_NODES);
+	NS_LOG_INFO("Number of service packets to send = " << NUMBER_OF_PACKETS_TO_SEND);
+	NS_LOG_INFO("Number of services offered by a node = " << NUMBER_OF_SERVICES_OFFERED);
+
 	SeedManager::SetSeed(time(NULL));
+	NS_LOG_INFO("Random seed seted to current time");
 }
 
 void Stratos::Run() {
+	NS_LOG_FUNCTION(this);
 	std::map<int, int> nodos;
 	for(; nodos.size() < (uint) NUMBER_OF_REQUESTER_NODES;) {
 		int nodo = Utilities::Random(0, TOTAL_NUMBER_OF_NODES - 1);
@@ -66,6 +77,7 @@ void Stratos::Run() {
 }
 
 void Stratos::CreateNodes() {
+	NS_LOG_FUNCTION(this);
 	CreateMobileNodes();
 	CreateStaticNodes();
 	wifiNodes.Add(mobileNodes);
@@ -73,6 +85,7 @@ void Stratos::CreateNodes() {
 }
 
 void Stratos::CreateDevices() {
+	NS_LOG_FUNCTION(this);
 	YansWifiChannelHelper wifiChannel = YansWifiChannelHelper::Default();
 	YansWifiPhyHelper wifiPhy = YansWifiPhyHelper::Default();
 	wifiPhy.SetChannel(wifiChannel.Create());
@@ -83,6 +96,7 @@ void Stratos::CreateDevices() {
 }
 
 void Stratos::InstallInternetStack() {
+	NS_LOG_FUNCTION(this);
 	InternetStackHelper internetStack;
 	internetStack.Install(wifiNodes);
 	Ipv4AddressHelper addressHelper;
@@ -91,6 +105,7 @@ void Stratos::InstallInternetStack() {
 }
 
 void Stratos::InstallApplications() {
+	NS_LOG_FUNCTION(this);
 	ApplicationContainer applications;
 	NeighborhoodHelper neigboors;
 	applications.Add(neigboors.Install(wifiNodes));
@@ -116,6 +131,7 @@ void Stratos::InstallApplications() {
 }
 
 void Stratos::CreateMobileNodes() {
+	NS_LOG_FUNCTION(this);
 	mobileNodes.Create(NUMBER_OF_MOBILE_NODES);
 	for(int i = 0; i < NUMBER_OF_MOBILE_NODES; ++i) {
 		std::ostringstream name;
@@ -133,6 +149,7 @@ void Stratos::CreateMobileNodes() {
 }
 
 void Stratos::CreateStaticNodes() {
+	NS_LOG_FUNCTION(this);
 	int nStaticNodes = TOTAL_NUMBER_OF_NODES - NUMBER_OF_MOBILE_NODES;
 	staticNodes.Create(nStaticNodes);
 	for(int i = 0; i < (nStaticNodes); ++i) {
@@ -148,6 +165,7 @@ void Stratos::CreateStaticNodes() {
 }
 
 Ptr<PositionAllocator> Stratos::GetPositionAllocator() {
+	NS_LOG_FUNCTION(this);
 	Ptr<UniformRandomVariable> random = CreateObject<UniformRandomVariable>();
 	random->SetAttribute("Min", DoubleValue(0));
 	random->SetAttribute("Max", DoubleValue(MAX_DISTANCE));
