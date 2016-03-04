@@ -314,21 +314,27 @@ void ServiceApplication::ReceiveResponse(Ptr<Packet> packet) {
 	NS_LOG_FUNCTION(this << packet);
 	ServiceRequestResponseHeader responseHeader;
 	packet->RemoveHeader(responseHeader);
+	NS_LOG_DEBUG(localAddress << " -> Received response " << responseHeader);
 	if(responseHeader.GetDestinationAddress() != localAddress) {
+		NS_LOG_DEBUG(localAddress << " -> response is not for me, forwarding it");
 		ForwardResponse(responseHeader);
 		return;
 	}
 	Flag flag;
 	std::pair<uint, std::string> responser = GetSenderKey(responseHeader);
 	Simulator::Cancel(timers[responser]);
-	Flag currentStatus = status[responser];;
+	Flag currentStatus = status[responser];
+	NS_LOG_DEBUG(localAddress << " -> Service for [" << responser.first << ", " << responser.second << "] is in state " << currentStatus);
+	NS_LOG_DEBUG(localAddress << " -> Response [" << responser.first << ", " << responser.second << "] has flag " << responseHeader.GetFlag());
 	switch(responseHeader.GetFlag()) {
 		case STRATOS_SERVICE_STARTED:
 			if(currentStatus == STRATOS_START_SERVICE) {
 				flag = STRATOS_DO_SERVICE;
 				status[responser] = STRATOS_DO_SERVICE;
+				NS_LOG_DEBUG(localAddress << " -> Service for [" << responser.first << ", " << responser.second << "] changes to state " << STRATOS_DO_SERVICE);
 				CreateAndSendRequest(responseHeader, flag);
 			} else {
+				NS_LOG_DEBUG(localAddress << " -> Response [" << responser.first << ", " << responser.second << "] out of sync, sending error");
 				CreateAndSendError(responseHeader);
 			}
 		break;
@@ -338,36 +344,48 @@ void ServiceApplication::ReceiveResponse(Ptr<Packet> packet) {
 					flag = STRATOS_DO_SERVICE;
 					packets[responser] += 1;
 					resultsManager->AddPacket(Now().GetMilliSeconds());
-					//std::cout << Now().GetMilliSeconds() << " -> " << localAddress << " received packet from " << responseHeader.GetSenderAddress() << std::endl;
-				} else {
+					NS_LOG_DEBUG(localAddress << " -> Received data packet from [" << responser.first << ", " << responser.second << "]");
+				}
+				if(packets[responser] >= maxPackets[responser]) {
 					flag = STRATOS_STOP_SERVICE;
 					status[responser] = STRATOS_STOP_SERVICE;
+					NS_LOG_DEBUG(localAddress << " -> All data received from [" << responser.first << ", " << responser.second << "]");
+					NS_LOG_DEBUG(localAddress << " -> Service for [" << responser.first << ", " << responser.second << "] changes to state " << STRATOS_SERVICE_STOPPED);
 				}
 				CreateAndSendRequest(responseHeader, flag);
 			} else {
+				NS_LOG_DEBUG(localAddress << " -> Response [" << responser.first << ", " << responser.second << "] out of sync, sending error");
 				CreateAndSendError(responseHeader);
 			}
 		break;
 		case STRATOS_SERVICE_STOPPED:
+			status[responser] = STRATOS_SERVICE_STOPPED;
+			NS_LOG_DEBUG(localAddress << " -> Service for [" << responser.first << ", " << responser.second << "] changes to state " << STRATOS_SERVICE_STOPPED);
 			CancelService(responser);
 		break;
-		default: break;
+		default:
+			NS_LOG_WARN(localAddress << " -> Request [" << responser.first << ", " << responser.second << "] has unknown flag " << responseHeader.GetFlag());
+		break;
 	}
 }
 
 void ServiceApplication::SendResponse(ServiceRequestResponseHeader responseHeader) {
 	NS_LOG_FUNCTION(this << responseHeader);
+	std::pair<uint, std::string> key = GetDestinationKey(responseHeader);
 	uint nextHop = routeManager->GetRouteTo(responseHeader.GetDestinationAddress().Get());
 	if(neighborhoodManager->IsInNeighborhood(nextHop)) {
-		//std::cout << responseHeader << std::endl;
+		NS_LOG_DEBUG(localAddress << " -> Next hop is still in neighborhood, sending response");
 		Ptr<Packet> packet = Create<Packet>(PACKET_LENGTH);
 		packet->AddHeader(responseHeader);
 		TypeHeader typeHeader(STRATOS_SERVICE_RESPONSE);
 		packet->AddHeader(typeHeader);
+		NS_LOG_DEBUG(localAddress << " -> Schedule response to send");
 		Simulator::Schedule(Seconds(Utilities::GetJitter()), &ServiceApplication::SendUnicastMessage, this, packet, nextHop);
-		timers[GetDestinationKey(responseHeader)] = Simulator::Schedule(Seconds(HELLO_TIME), &ServiceApplication::CancelService, this, GetDestinationKey(responseHeader));
+		NS_LOG_DEBUG(localAddress << " -> Setting up cancel timer");
+		timers[key] = Simulator::Schedule(Seconds(HELLO_TIME), &ServiceApplication::CancelService, this, key);
 	} else {
-		CancelService(GetDestinationKey(responseHeader));
+		NS_LOG_DEBUG(localAddress << " -> Next hop has left neighborhood, canceling service");
+		CancelService(key);
 	}
 }
 
@@ -375,12 +393,15 @@ void ServiceApplication::ForwardResponse(ServiceRequestResponseHeader responseHe
 	NS_LOG_FUNCTION(this << responseHeader);
 	uint nextHop = routeManager->GetRouteTo(responseHeader.GetDestinationAddress().Get());
 	if(neighborhoodManager->IsInNeighborhood(nextHop)) {
+		NS_LOG_DEBUG(localAddress << " -> Next hop is still in neighborhood, forwarding response");
 		Ptr<Packet> packet = Create<Packet>(PACKET_LENGTH);
 		packet->AddHeader(responseHeader);
 		TypeHeader typeHeader(STRATOS_SERVICE_RESPONSE);
 		packet->AddHeader(typeHeader);
+		NS_LOG_DEBUG(localAddress << " -> Schedule response to forward");
 		Simulator::Schedule(Seconds(Utilities::GetJitter()), &ServiceApplication::SendUnicastMessage, this, packet, nextHop);
 	} else {
+		NS_LOG_DEBUG(localAddress << " -> Next hop has left neighborhood, canceling service");
 		CreateAndSendError(responseHeader);
 	}
 }
@@ -397,6 +418,7 @@ ServiceRequestResponseHeader ServiceApplication::CreateResponse(ServiceRequestRe
 	response.SetSenderAddress(localAddress);
 	response.SetService(request.GetService());
 	response.SetDestinationAddress(request.GetSenderAddress());
+	NS_LOG_DEBUG(localAddress << " -> Response created: " << response);
 	return response;
 }
 
