@@ -102,7 +102,7 @@ void ScheduleApplication::ContinueSchedule() {
 	if(!schedule.empty()) {
 		SearchResponseHeader node = schedule.front();
 		NS_LOG_DEBUG(GetNode()->GetObject<Ipv4>()->GetAddress(1, 0).GetLocal() << " -> next node in schedule is " << node);
-		serviceManager->CreateAndSendRequest(node.GetResponseAddress(), node.GetOfferedService().service,packetsByNode);
+		serviceManager->CreateAndSendRequest(node.GetResponseAddress(), node.GetOfferedService().service, packetsByNode);
 		schedule.pop_front();
 		return;
 	}
