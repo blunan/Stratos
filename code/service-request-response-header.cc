@@ -44,7 +44,8 @@ void ServiceRequestResponseHeader::Print(std::ostream &stream) const {
 			flag = "serviceStopped";
 			break;
 		default:
-			stream << "unknown";
+			type = "unknown";
+			flag = "unknown";
 	}
 	stream << "Service " << type << " sent from " << senderAddress << " to " << destinationAddress << " for service " << service << " with flag " << flag;
 }
