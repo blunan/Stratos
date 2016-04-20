@@ -142,27 +142,27 @@ CalculateStatics() {
 	echo "$avgTimes|$avgSuccessPercentage|$avgFoundPercentage|$avgPacketsPercentage|$avgControlOverhead"
 }
 
-CalculateStatics stratos/mobile_0.txt > stratos/statics.txt
-CalculateStatics stratos/mobile_25.txt >> stratos/statics.txt
-CalculateStatics stratos/mobile_50.txt >> stratos/statics.txt
-CalculateStatics stratos/mobile_100.txt >> stratos/statics.txt
-echo " " >> stratos/statics.txt
-CalculateStatics stratos/requesters_1.txt 10 1 >> stratos/statics.txt
-CalculateStatics stratos/requesters_2.txt 10 2 >> stratos/statics.txt
-CalculateStatics stratos/requesters_4.txt 10 4 >> stratos/statics.txt
-CalculateStatics stratos/requesters_8.txt 10 8 >> stratos/statics.txt
-CalculateStatics stratos/requesters_16.txt 10 16 >> stratos/statics.txt
-CalculateStatics stratos/requesters_24.txt 10 24 >> stratos/statics.txt
-CalculateStatics stratos/requesters_32.txt 10 32 >> stratos/statics.txt
-echo " " >> stratos/statics.txt
-CalculateStatics stratos/services_1.txt >> stratos/statics.txt
-CalculateStatics stratos/services_2.txt >> stratos/statics.txt
-CalculateStatics stratos/services_4.txt >> stratos/statics.txt
-CalculateStatics stratos/services_8.txt >> stratos/statics.txt
-echo " " >> stratos/statics.txt
-#CalculateStatics stratos/packets_1.txt 1 >> stratos/statics.txt
-CalculateStatics stratos/packets_10.txt 10 >> stratos/statics.txt
-CalculateStatics stratos/packets_20.txt 20 >> stratos/statics.txt
-CalculateStatics stratos/packets_40.txt 40 >> stratos/statics.txt
-CalculateStatics stratos/packets_60.txt 60 >> stratos/statics.txt
-echo " " >> stratos/statics.txt
+CalculateStatics stratos/distributed_mobile_0.txt > stratos/distributed_statics.txt
+CalculateStatics stratos/distributed_mobile_25.txt >> stratos/distributed_statics.txt
+CalculateStatics stratos/distributed_mobile_50.txt >> stratos/distributed_statics.txt
+CalculateStatics stratos/distributed_mobile_100.txt >> stratos/distributed_statics.txt
+echo " " >> stratos/distributed_statics.txt
+CalculateStatics stratos/distributed_requesters_1.txt 10 1 >> stratos/distributed_statics.txt
+CalculateStatics stratos/distributed_requesters_2.txt 10 2 >> stratos/distributed_statics.txt
+CalculateStatics stratos/distributed_requesters_4.txt 10 4 >> stratos/distributed_statics.txt
+CalculateStatics stratos/distributed_requesters_8.txt 10 8 >> stratos/distributed_statics.txt
+CalculateStatics stratos/distributed_requesters_16.txt 10 16 >> stratos/distributed_statics.txt
+CalculateStatics stratos/distributed_requesters_24.txt 10 24 >> stratos/distributed_statics.txt
+CalculateStatics stratos/distributed_requesters_32.txt 10 32 >> stratos/distributed_statics.txt
+echo " " >> stratos/distributed_statics.txt
+CalculateStatics stratos/distributed_services_1.txt >> stratos/distributed_statics.txt
+CalculateStatics stratos/distributed_services_2.txt >> stratos/distributed_statics.txt
+CalculateStatics stratos/distributed_services_4.txt >> stratos/distributed_statics.txt
+CalculateStatics stratos/distributed_services_8.txt >> stratos/distributed_statics.txt
+echo " " >> stratos/distributed_statics.txt
+#CalculateStatics stratos/distributed_packets_1.txt 1 >> stratos/distributed_statics.txt
+CalculateStatics stratos/distributed_packets_10.txt 10 >> stratos/distributed_statics.txt
+CalculateStatics stratos/distributed_packets_20.txt 20 >> stratos/distributed_statics.txt
+CalculateStatics stratos/distributed_packets_40.txt 40 >> stratos/distributed_statics.txt
+CalculateStatics stratos/distributed_packets_60.txt 60 >> stratos/distributed_statics.txt
+echo " " >> stratos/distributed_statics.txt
