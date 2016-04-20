@@ -23,7 +23,14 @@ export NS_LOG=
 #Full Stratos logging
 #export NS_LOG="SearchApplication:ServiceApplication:ScheduleApplication:NeighborhoodApplication:OntologyApplication:PositionApplication:ResultsApplication:RouteApplication:Stratos"
 
-for i in {1..20}
+# Configure and complite first the program to avoid counting compilation time as running time
+./waf clean
+CXXFLAGS="-O3 -w" ./waf -d optimized configure --enable-static --enable-examples
+
+# Build once
+./waf --run stratos_distributed
+
+for i in {1..100}
 do
 	./waf --run "stratos_distributed --nMobile=0" >> stratos/distributed_mobile_0.txt 2>&1
 	./waf --run "stratos_distributed --nMobile=25" >> stratos/distributed_mobile_25.txt 2>&1
