@@ -20,10 +20,8 @@ def CalculateStatics(resultsFile, nPackets = 10, nRequesters = 4) :
 	timesSum = 0 #
 	nSuccess = 0
 	avgTimes = []
-	nTimesSum = 0
 	totAvgTime = 0
 	packetsSum = 0 #
-	nSimulations = 0
 	deviations = range(5)
 	avgControlOverheads = []
 	avgFoundPercentages = []
@@ -41,8 +39,6 @@ def CalculateStatics(resultsFile, nPackets = 10, nRequesters = 4) :
 			nLines += 1
 			if (nLines % nRequesters) == 0 : # We have read all the results for requesters on the same simulation
 				aux = 0
-				nSimulations += 1
-					nTimesSum += 1
 				if nTimes > 0 : # At least one requester received one data package
 					aux = timesSum / nTimes
 					totAvgTime += aux
@@ -75,11 +71,11 @@ def CalculateStatics(resultsFile, nPackets = 10, nRequesters = 4) :
 					packetsSum += int(values[3]) # Amount of data packages received
 				nFound += int(values[2]) # Was a node to provide us the requested service found?
 				nSuccess += int(values[1]) # Was the node found the best one to provide us the requested service?
-	totAvgTime = totAvgTime / nTimesSum;
-	totAvgControlOverhead =  totAvgControlOverhead / nTimesSum
-	totAvgFoundPercentage = totAvgFoundPercentage / nSimulations
-	totAvgPacketsPercentage = totAvgPacketsPercentage / nTimesSum
-	totAvgSuccessPercentage = totAvgSuccessPercentage / nSimulations
+	totAvgTime = totAvgTime / len(avgTimes);
+	totAvgControlOverhead =  totAvgControlOverhead / len(avgControlOverheads)
+	totAvgFoundPercentage = totAvgFoundPercentage / len(avgFoundPercentages)
+	totAvgPacketsPercentage = totAvgPacketsPercentage / len(avgPacketsPercentages)
+	totAvgSuccessPercentage = totAvgSuccessPercentage / len(avgSuccessPercentages)
 	# Calculate standard deviations
 	deviations[0] = CalculateStandardDeviation(avgTimes, totAvgTime)
 	deviations[1] = CalculateStandardDeviation(avgSuccessPercentages,totAvgSuccessPercentage)
@@ -87,11 +83,11 @@ def CalculateStatics(resultsFile, nPackets = 10, nRequesters = 4) :
 	deviations[3] = CalculateStandardDeviation(avgPacketsPercentages, totAvgPacketsPercentage)
 	deviations[4] = CalculateStandardDeviation(avgControlOverheads, totAvgControlOverhead)
 	# Calculate a 1 - alpha = 95% confidence interval, this means P(-1.96 < z < 1.96) = 0.95
-	confidenceIntervals[0] = 1.96 * (deviations[0] / math.sqrt(nTimesSum))
-	confidenceIntervals[1] = 1.96 * (deviations[1] / math.sqrt(nSimulations))
-	confidenceIntervals[2] = 1.96 * (deviations[2] / math.sqrt(nSimulations))
-	confidenceIntervals[3] = 1.96 * (deviations[3] / math.sqrt(nTimesSum))
-	confidenceIntervals[4] = 1.96 * (deviations[4] / math.sqrt(nTimesSum))
+	confidenceIntervals[0] = 1.96 * (deviations[0] / math.sqrt(len(avgTimes)))
+	confidenceIntervals[1] = 1.96 * (deviations[1] / math.sqrt(len(avgSuccessPercentages)))
+	confidenceIntervals[2] = 1.96 * (deviations[2] / math.sqrt(len(avgFoundPercentages)))
+	confidenceIntervals[3] = 1.96 * (deviations[3] / math.sqrt(len(avgPacketsPercentages)))
+	confidenceIntervals[4] = 1.96 * (deviations[4] / math.sqrt(len(avgControlOverheads)))
 	print "%.4f|%.4f|%.4f|%.4f|%.4f" % (confidenceIntervals[0], confidenceIntervals[1], confidenceIntervals[2], confidenceIntervals[3], confidenceIntervals[4])
 	print "%.4f|%.4f|%.4f|%.4f|%.4f" % (totAvgTime, totAvgSuccessPercentage, totAvgFoundPercentage, totAvgPacketsPercentage, totAvgControlOverhead)
 
