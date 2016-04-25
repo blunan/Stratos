@@ -35,8 +35,6 @@ def CalculateStatics(resultsFile, nPackets = 10, nRequesters = 4) :
 	totAvgPacketsPercentage = 0
 	confidenceIntervals = range(5)
 
-	print nPackets
-
 	nRequesters += 1
 	with open(resultsFile) as file :
 		for line in file :
@@ -45,13 +43,14 @@ def CalculateStatics(resultsFile, nPackets = 10, nRequesters = 4) :
 				aux = 0
 				nSimulations += 1
 				if nTimes > 0 : # At least one requester received one data
+					nTimesSum += 1
 					aux = timesSum / nTimes
 					totAvgTime += aux
 					avgTimes.append(aux)
 					try :
 						aux = int(line) / (packetsSum * 256)
 					except ZeroDivisionError:
-						aux = 0 # int(line) #TODO should it be 0?
+						aux = int(line) #TODO should it be 0?
 					totAvgControlOverhead += aux
 					avgControlOverheads.append(aux)
 					aux = (packetsSum * 100) / (nPackets * nTimes)
@@ -72,7 +71,6 @@ def CalculateStatics(resultsFile, nPackets = 10, nRequesters = 4) :
 				values = line.split("|")
 				if int(values[0]) >= 0 : # At least one data package was received
 					nTimes += 1
-					nTimesSum += 1
 					timesSum += int(values[0]) # Time elapsed since request was sent until first data package was received
 					packetsSum += int(values[3]) # Amount of data packages received
 				nFound += int(values[2]) # Was a node to provide us the requested service found?
