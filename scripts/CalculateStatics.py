@@ -1,10 +1,10 @@
 import os
 import math
 
-if os.path.exists("/home/blunan/Desktop/ns-3") :
-	os.chdir("/home/blunan/Desktop/ns-3")
+if os.path.exists(os.path.expanduser("~/Desktop/ns-3")) :
+	os.chdir(os.path.expanduser("~/Desktop/ns-3"))
 else :
-	os.chdir("/home/blunan/ns-3")
+	os.chdir(os.path.expanduser("~/ns-3"))
 
 def CalculateStandardDeviation(values, average) :
 	deviation = 0
