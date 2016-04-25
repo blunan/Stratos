@@ -35,15 +35,15 @@ def CalculateStatics(resultsFile, nPackets = 10, nRequesters = 4) :
 	totAvgPacketsPercentage = 0
 	confidenceIntervals = range(5)
 
-	nRequesters += 1
+	nRequesters += 1 # Virtual requester to read total amount of data sent during simulation
 	with open(resultsFile) as file :
-		for line in file :
+		for line in file : # Read the file line by line
 			nLines += 1
 			if (nLines % nRequesters) == 0 : # We have read all the results for requesters on the same simulation
 				aux = 0
 				nSimulations += 1
-				if nTimes > 0 : # At least one requester received one data
 					nTimesSum += 1
+				if nTimes > 0 : # At least one requester received one data package
 					aux = timesSum / nTimes
 					totAvgTime += aux
 					avgTimes.append(aux)
@@ -113,7 +113,7 @@ CalculateStatics("stratos/distributed_services_2.txt")
 CalculateStatics("stratos/distributed_services_4.txt")
 CalculateStatics("stratos/distributed_services_8.txt")
 print ""
-#CalculateStatics stratos/distributed_packets_1.txt 1 >> stratos/distributed_statics.txt
+#CalculateStatics("stratos/distributed_packets_1.txt", 1)
 CalculateStatics("stratos/distributed_packets_10.txt", 10)
 CalculateStatics("stratos/distributed_packets_20.txt", 20)
 CalculateStatics("stratos/distributed_packets_40.txt", 40)
