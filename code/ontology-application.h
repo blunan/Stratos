@@ -10,7 +10,7 @@ class OntologyApplication : public Application {
 
 	public:
 		static TypeId GetTypeId();
-		
+
 		OntologyApplication();
 		~OntologyApplication();
 
@@ -38,7 +38,7 @@ class OntologyApplication : public Application {
 
 		bool DoIProvideService(std::string service);
 		std::list<std::string> GetOfferedServices();
-		OFFERED_SERVICE GetBestOfferedService(std::string requiredService);		
+		OFFERED_SERVICE GetBestOfferedService(std::string requiredService);
 };
 
 class OntologyHelper : public ApplicationHelper {

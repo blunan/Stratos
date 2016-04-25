@@ -36,9 +36,10 @@ class ScheduleApplication : public Application {
 		Ptr<ServiceApplication> serviceManager;
 		std::list<SearchResponseHeader> schedule;
 
+		static std::list<SearchResponseHeader> DeleteElement(std::list<SearchResponseHeader> list, SearchResponseHeader element);
+
 		void ExecuteSchedule();
 		void CreateSchedule(std::list<SearchResponseHeader> responses);
-		std::list<SearchResponseHeader> PopElement(std::list<SearchResponseHeader> list, SearchResponseHeader element);
 
 	public:
 		void ContinueSchedule();
