@@ -1,3 +1,4 @@
+from __future__ import print_function
 import os
 import math
 
@@ -85,14 +86,15 @@ def CalculateStatics(resultsFile, nPackets = 10, nRequesters = 4) :
 	confidenceIntervals[2] = 1.96 * (deviations[2] / math.sqrt(len(avgFoundPercentages)))
 	confidenceIntervals[3] = 1.96 * (deviations[3] / math.sqrt(len(avgPacketsPercentages)))
 	confidenceIntervals[4] = 1.96 * (deviations[4] / math.sqrt(len(avgControlOverheads)))
-	print "%.4f|%.4f|%.4f|%.4f|%.4f" % (confidenceIntervals[0], confidenceIntervals[1], confidenceIntervals[2], confidenceIntervals[3], confidenceIntervals[4])
-	print "%.4f|%.4f|%.4f|%.4f|%.4f" % (totAvgTime, totAvgSuccessPercentage, totAvgFoundPercentage, totAvgPacketsPercentage, totAvgControlOverhead)
+	print("%.4f|%.4f|%.4f|%.4f|%.4f" % (confidenceIntervals[0], confidenceIntervals[1], confidenceIntervals[2], confidenceIntervals[3], confidenceIntervals[4]), file=staticsFile)
+	print("%.4f|%.4f|%.4f|%.4f|%.4f" % (totAvgTime, totAvgSuccessPercentage, totAvgFoundPercentage, totAvgPacketsPercentage, totAvgControlOverhead), file=staticsFile)
 
+staticsFile = open("stratos/distributed_statics.txt", "w+")
 CalculateStatics("stratos/distributed_mobile_0.txt")
 CalculateStatics("stratos/distributed_mobile_25.txt")
 CalculateStatics("stratos/distributed_mobile_50.txt")
 CalculateStatics("stratos/distributed_mobile_100.txt")
-print ""
+print(" ", file=staticsFile)
 CalculateStatics("stratos/distributed_requesters_1.txt", 10, 1)
 CalculateStatics("stratos/distributed_requesters_2.txt", 10, 2)
 CalculateStatics("stratos/distributed_requesters_4.txt", 10, 4)
@@ -100,14 +102,15 @@ CalculateStatics("stratos/distributed_requesters_8.txt", 10, 8)
 CalculateStatics("stratos/distributed_requesters_16.txt", 10, 16)
 CalculateStatics("stratos/distributed_requesters_24.txt", 10, 24)
 CalculateStatics("stratos/distributed_requesters_32.txt", 10, 32)
-print ""
+print(" ", file=staticsFile)
 CalculateStatics("stratos/distributed_services_1.txt")
 CalculateStatics("stratos/distributed_services_2.txt")
 CalculateStatics("stratos/distributed_services_4.txt")
 CalculateStatics("stratos/distributed_services_8.txt")
-print ""
+print(" ", file=staticsFile)
 #CalculateStatics("stratos/distributed_packets_1.txt", 1)
 CalculateStatics("stratos/distributed_packets_10.txt", 10)
 CalculateStatics("stratos/distributed_packets_20.txt", 20)
 CalculateStatics("stratos/distributed_packets_40.txt", 40)
 CalculateStatics("stratos/distributed_packets_60.txt", 60)
+staticsFile.close()
