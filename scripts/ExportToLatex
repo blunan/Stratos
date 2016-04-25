@@ -12,7 +12,7 @@ indexes[1]="1 2 4 8 16 24 32"
 indexes[2]="1 2 4 8"
 indexes[3]="10 20 40 60"
 
-ReadAndExport() {	
+ReadAndExport() {
 	i=0
 	j=0
 	k=0
@@ -27,7 +27,6 @@ ReadAndExport() {
 			do
 				for i in ${!values[*]}
 				do
-					
 					declare -a value=(${values[i]})
 					declare -a deviation=(${deviations[i]})
 					echo "(${index[i]}, ${value[j]}) +- (0, ${deviation[j]})"
@@ -56,4 +55,4 @@ ReadAndExport() {
 	done < "$file"
 }
 
-ReadAndExport stratos/statics.txt > stratos/statics.tex
+ReadAndExport stratos/distributed_statics.txt > stratos/distributed_statics.tex

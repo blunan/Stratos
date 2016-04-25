@@ -14,29 +14,45 @@ else
 	mkdir stratos
 fi
 
+#Default = NO LOGGING
+export NS_LOG=
+
+#Search, Schedule and Service apps logging
+#export NS_LOG="SearchApplication=*|prefix_func:ServiceApplication=*|prefix_func:ScheduleApplication=*|prefix_func"
+
+#Full Stratos logging
+#export NS_LOG="SearchApplication:ServiceApplication:ScheduleApplication:NeighborhoodApplication:OntologyApplication:PositionApplication:ResultsApplication:RouteApplication:Stratos"
+
+# Configure and complite first the program to avoid counting compilation time as running time
+./waf clean
+CXXFLAGS="-O3 -w" ./waf -d optimized configure --enable-static --enable-examples
+
+# Build once
+./waf --run stratos_distributed
+
 for i in {1..100}
 do
-	./waf --run "stratos_distributed --nMobile=0" >> stratos/distributed_mobile_0.txt
-	./waf --run "stratos_distributed --nMobile=25" >> stratos/distributed_mobile_25.txt
-	./waf --run "stratos_distributed --nMobile=50" >> stratos/distributed_mobile_50.txt
-	./waf --run "stratos_distributed --nMobile=100" >> stratos/distributed_mobile_100.txt
+	./waf --run "stratos_distributed --nMobile=0" >> stratos/distributed_mobile_0.txt 2>&1
+	./waf --run "stratos_distributed --nMobile=25" >> stratos/distributed_mobile_25.txt 2>&1
+	./waf --run "stratos_distributed --nMobile=50" >> stratos/distributed_mobile_50.txt 2>&1
+	./waf --run "stratos_distributed --nMobile=100" >> stratos/distributed_mobile_100.txt 2>&1
 
-	./waf --run "stratos_distributed --nRequesters=1" >> stratos/distributed_requesters_1.txt
-	./waf --run "stratos_distributed --nRequesters=2" >> stratos/distributed_requesters_2.txt
-	./waf --run "stratos_distributed --nRequesters=4" >> stratos/distributed_requesters_4.txt
-	./waf --run "stratos_distributed --nRequesters=8" >> stratos/distributed_requesters_8.txt
-	./waf --run "stratos_distributed --nRequesters=16" >> stratos/distributed_requesters_16.txt
-	./waf --run "stratos_distributed --nRequesters=24" >> stratos/distributed_requesters_24.txt
-	./waf --run "stratos_distributed --nRequesters=32" >> stratos/distributed_requesters_32.txt
+	./waf --run "stratos_distributed --nRequesters=1" >> stratos/distributed_requesters_1.txt 2>&1
+	./waf --run "stratos_distributed --nRequesters=2" >> stratos/distributed_requesters_2.txt 2>&1
+	./waf --run "stratos_distributed --nRequesters=4" >> stratos/distributed_requesters_4.txt 2>&1
+	./waf --run "stratos_distributed --nRequesters=8" >> stratos/distributed_requesters_8.txt 2>&1
+	./waf --run "stratos_distributed --nRequesters=16" >> stratos/distributed_requesters_16.txt 2>&1
+	./waf --run "stratos_distributed --nRequesters=24" >> stratos/distributed_requesters_24.txt 2>&1
+	./waf --run "stratos_distributed --nRequesters=32" >> stratos/distributed_requesters_32.txt 2>&1
 
-	./waf --run "stratos_distributed --nServices=1" >> stratos/distributed_services_1.txt
-	./waf --run "stratos_distributed --nServices=2" >> stratos/distributed_services_2.txt
-	./waf --run "stratos_distributed --nServices=4" >> stratos/distributed_services_4.txt
-	./waf --run "stratos_distributed --nServices=8" >> stratos/distributed_services_8.txt
+	./waf --run "stratos_distributed --nServices=1" >> stratos/distributed_services_1.txt 2>&1
+	./waf --run "stratos_distributed --nServices=2" >> stratos/distributed_services_2.txt 2>&1
+	./waf --run "stratos_distributed --nServices=4" >> stratos/distributed_services_4.txt 2>&1
+	./waf --run "stratos_distributed --nServices=8" >> stratos/distributed_services_8.txt 2>&1
 
-	#./waf --run "stratos_distributed --nPackets=1" >> stratos/distributed_packets_1.txt
-	./waf --run "stratos_distributed --nPackets=10" >> stratos/distributed_packets_10.txt
-	./waf --run "stratos_distributed --nPackets=20" >> stratos/distributed_packets_20.txt
-	./waf --run "stratos_distributed --nPackets=40" >> stratos/distributed_packets_40.txt
-	./waf --run "stratos_distributed --nPackets=60" >> stratos/distributed_packets_60.txt
+	#./waf --run "stratos_distributed --nPackets=1" >> stratos/distributed_packets_1.txt 2>&1
+	./waf --run "stratos_distributed --nPackets=10" >> stratos/distributed_packets_10.txt 2>&1
+	./waf --run "stratos_distributed --nPackets=20" >> stratos/distributed_packets_20.txt 2>&1
+	./waf --run "stratos_distributed --nPackets=40" >> stratos/distributed_packets_40.txt 2>&1
+	./waf --run "stratos_distributed --nPackets=60" >> stratos/distributed_packets_60.txt 2>&1
 done
