@@ -56,6 +56,7 @@ void ScheduleApplication::ExecuteSchedule() {
 	NS_LOG_DEBUG(GetNode()->GetObject<Ipv4>()->GetAddress(1, 0).GetLocal() << " -> service packages per node in schedule are " << packetsByNode);
 	int requestExtraPackets = serviceManager->NUMBER_OF_PACKETS_TO_SEND % schedule.size();
 	NS_LOG_DEBUG(GetNode()->GetObject<Ipv4>()->GetAddress(1, 0).GetLocal() << " -> there are " << requestExtraPackets << " packets that will be added to this request to fill the " << serviceManager->NUMBER_OF_PACKETS_TO_SEND << " total packages needed");
+	serviceManager->SetCallback(MakeCallback(&ScheduleApplication::ContinueSchedule, this));
 	serviceManager->CreateAndSendRequest(node.GetResponseAddress(), node.GetOfferedService().service,packetsByNode + requestExtraPackets);
 	schedule.pop_front();
 }
