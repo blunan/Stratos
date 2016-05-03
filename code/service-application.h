@@ -14,8 +14,6 @@
 
 using namespace ns3;
 
-class ScheduleApplication;
-
 class ServiceApplication : public Application {
 
 	public:
@@ -34,6 +32,7 @@ class ServiceApplication : public Application {
 
 	public:
 		int NUMBER_OF_PACKETS_TO_SEND;
+		void SetCallback(Callback<void> continueScheduleCallback);
 		void CreateAndSendRequest(Ipv4Address destinationAddress, std::string service, int packets);
 
 	private:
@@ -41,28 +40,28 @@ class ServiceApplication : public Application {
 		Ipv4Address localAddress;
 		Ptr<RouteApplication> routeManager;
 		Ptr<ResultsApplication> resultsManager;
+		Callback<void> continueScheduleCallback;
 		Ptr<OntologyApplication> ontologyManager;
-		Ptr<ScheduleApplication> scheduleManager;
 		Ptr<NeighborhoodApplication> neighborhoodManager;
 		std::map<std::pair<uint, std::string>, Flag> status;
 		std::map<std::pair<uint, std::string>, int> packets;
 		std::map<std::pair<uint, std::string>, int> maxPackets;
 		std::map<std::pair<uint, std::string>, EventId> timers;
-		
+
 		void ReceiveMessage(Ptr<Socket> socket);
 		void CancelService(std::pair<uint, std::string> key);
 		void SendUnicastMessage(Ptr<Packet> packet, uint destinationAddress);
 		std::pair<uint, std::string> GetSenderKey(ServiceErrorHeader errorHeader);
 		std::pair<uint, std::string> GetSenderKey(ServiceRequestResponseHeader requestResponse);
 		std::pair<uint, std::string> GetDestinationKey(ServiceRequestResponseHeader requestResponse);
-		
+
 		void ReceiveRequest(Ptr<Packet> packet);
 		void SendRequest(ServiceRequestResponseHeader requestHeader);
 		void ForwardRequest(ServiceRequestResponseHeader requestHeader);
 		void CreateAndSendRequest(ServiceRequestResponseHeader response, Flag flag);
 		ServiceRequestResponseHeader CreateRequest(ServiceRequestResponseHeader response, Flag flag);
 		ServiceRequestResponseHeader CreateRequest(Ipv4Address destinationAddress, std::string service);
-		
+
 		void ReceiveError(Ptr<Packet> packet);
 		void SendError(ServiceErrorHeader errorHeader);
 		void CreateAndSendError(ServiceRequestResponseHeader requestResponse);
