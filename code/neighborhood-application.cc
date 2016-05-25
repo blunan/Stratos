@@ -131,8 +131,8 @@ void NeighborhoodApplication::AddUpdateNeighborhood(uint address, double now) {
 	neighbor.lastSeen = now;
 	neighbor.address = address;
 	neighborhood.push_back(neighbor);
-	NS_LOG_DEBUG(GetNode()->GetObject<Ipv4>()->GetAddress(1, 0).GetLocal() << " -> node " << Ipv4Address(address) << " last seen at " << now);
 	pthread_mutex_unlock(&mutex);
+	NS_LOG_DEBUG(GetNode()->GetObject<Ipv4>()->GetAddress(1, 0).GetLocal() << " -> node " << Ipv4Address(address) << " last seen at " << now);
 }
 
 std::list<uint> NeighborhoodApplication::GetNeighborhood() {
