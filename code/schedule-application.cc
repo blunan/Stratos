@@ -87,7 +87,6 @@ void ScheduleApplication::CreateSchedule(std::list<SearchResponseHeader> respons
 
 std::list<SearchResponseHeader> ScheduleApplication::DeleteElement(std::list<SearchResponseHeader> list, SearchResponseHeader element) {
 	NS_LOG_FUNCTION(&list << element);
-	std::list<SearchResponseHeader>::iterator i;
 	for(std::list<SearchResponseHeader>::iterator i = list.begin(); i != list.end(); i++) {
 		if((*i).GetRequestTimestamp() == element.GetRequestTimestamp() && (*i).GetResponseAddress() == element.GetResponseAddress()) {
 			NS_LOG_DEBUG("Deleting response from list: " << (*i));
