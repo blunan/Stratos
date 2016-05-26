@@ -67,15 +67,16 @@ void ScheduleApplication::CreateSchedule(std::list<SearchResponseHeader> respons
 	SearchResponseHeader bestResponse = SearchApplication::SelectBestResponse(responses);
 	int bestSemanticDistance = bestResponse.GetOfferedService().semanticDistance;
 	resultsManager->SetResponseSemanticDistance(bestSemanticDistance);
-	NS_LOG_DEBUG(GetNode()->GetObject<Ipv4>()->GetAddress(1, 0).GetLocal() << " -> only adding responses with semantic distance >= " << bestSemanticDistance);
+	NS_LOG_DEBUG(GetNode()->GetObject<Ipv4>()->GetAddress(1, 0).GetLocal() << " -> only adding responses with semantic distance <= " << bestSemanticDistance);
 	schedule.push_back(bestResponse);
 	NS_LOG_DEBUG(GetNode()->GetObject<Ipv4>()->GetAddress(1, 0).GetLocal() << " -> added response to schedule: " << bestResponse);
 	responses = DeleteElement(responses, bestResponse);
 	while(!responses.empty() && scheduleSize < MAX_SCHEDULE_SIZE) {
 		bestResponse = SearchApplication::SelectBestResponse(responses);
-		if(bestResponse.GetOfferedService().semanticDistance < bestSemanticDistance) {
-			NS_LOG_INFO(GetNode()->GetObject<Ipv4>()->GetAddress(1, 0).GetLocal() << " -> only adding responses with semantic distance >= " << bestSemanticDistance);
-			break;
+		if(bestResponse.GetOfferedService().semanticDistance > bestSemanticDistance) {
+			NS_LOG_INFO(GetNode()->GetObject<Ipv4>()->GetAddress(1, 0).GetLocal() << " -> only adding responses with semantic distance <= " << bestSemanticDistance);
+			responses = DeleteElement(responses, bestResponse);
+			continue;
 		}
 		schedule.push_back(bestResponse);
 		NS_LOG_DEBUG(GetNode()->GetObject<Ipv4>()->GetAddress(1, 0).GetLocal() << " -> added response to schedule: " << bestResponse);
