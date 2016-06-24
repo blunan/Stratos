@@ -92,7 +92,9 @@ SearchResponseHeader SearchApplication::SelectBestResponse(std::list<SearchRespo
 void SearchApplication::CreateAndSendRequest() {
 	NS_LOG_FUNCTION(this);
 	SearchRequestHeader request = CreateRequest();
+	pthread_mutex_lock(&mutex);
 	seenRequests[GetRequestKey(request)] = request.GetCurrentHops();
+	pthread_mutex_unlock(&mutex);
 	SendRequest(request);
 	resultsManager->Activate();
 	resultsManager->SetRequestTime(request.GetRequestTimestamp());
@@ -216,8 +218,8 @@ void SearchApplication::ReceiveRequest(Ptr<Packet> packet, uint senderAddress) {
 	packet->RemoveHeader(requestHeader);
 	requestHeader.SetCurrentHops(requestHeader.GetCurrentHops() + 1);
 	NS_LOG_DEBUG(localAddress << " -> Received: " << requestHeader);
-	pthread_mutex_lock(&mutex);
 	std::pair<uint, double> requestKey = GetRequestKey(requestHeader);
+	pthread_mutex_lock(&mutex);
 	if(!IsValidRequest(requestHeader)) {
 		NS_LOG_DEBUG(localAddress << " -> Request from " << Ipv4Address(senderAddress) << " is invalid");
 		if(requestHeader.GetCurrentHops() < seenRequests[requestKey]) {
@@ -329,8 +331,8 @@ void SearchApplication::VerifyResponses(std::pair<uint, double> request) {
 		}
 	}
 	pendings[request] = pending;
-	pthread_mutex_unlock(&mutex);
 	int hops = seenRequests[request];
+	pthread_mutex_unlock(&mutex);
 	double maxSecondsWait = (double) ((MAX_HOPS - hops) * VERIFY_TIME);
 	double secondsElapsed = (Now().GetMilliSeconds() - request.second) / 1000;
 	NS_LOG_DEBUG(localAddress << " -> [" << request.first << ", " << request.second << "] hops = " << hops << ", maxWaitSeconds = " << maxSecondsWait << ", secondsElapsed = " << secondsElapsed << " [" << request.first << ", " << request.second << "]");
@@ -382,7 +384,10 @@ void SearchApplication::SelectAndSendBestResponse(std::pair<uint, double> reques
 		scheduleManager->CreateAndExecuteSchedule(responses);
 	} else {
 		NS_LOG_DEBUG(localAddress << " -> Send response to parent");
-		SendResponse(response, parents[request]);
+		pthread_mutex_lock(&mutex);
+		uint parent = parents[request];
+		pthread_mutex_unlock(&mutex);
+		SendResponse(response, parent);
 	}
 }
 

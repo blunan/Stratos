@@ -67,15 +67,16 @@ void ScheduleApplication::CreateSchedule(std::list<SearchResponseHeader> respons
 	SearchResponseHeader bestResponse = SearchApplication::SelectBestResponse(responses);
 	int bestSemanticDistance = bestResponse.GetOfferedService().semanticDistance;
 	resultsManager->SetResponseSemanticDistance(bestSemanticDistance);
-	NS_LOG_DEBUG(GetNode()->GetObject<Ipv4>()->GetAddress(1, 0).GetLocal() << " -> only adding responses with semantic distance >= " << bestSemanticDistance);
+	NS_LOG_DEBUG(GetNode()->GetObject<Ipv4>()->GetAddress(1, 0).GetLocal() << " -> only adding responses with semantic distance <= " << bestSemanticDistance);
 	schedule.push_back(bestResponse);
 	NS_LOG_DEBUG(GetNode()->GetObject<Ipv4>()->GetAddress(1, 0).GetLocal() << " -> added response to schedule: " << bestResponse);
 	responses = DeleteElement(responses, bestResponse);
 	while(!responses.empty() && scheduleSize < MAX_SCHEDULE_SIZE) {
 		bestResponse = SearchApplication::SelectBestResponse(responses);
-		if(bestResponse.GetOfferedService().semanticDistance < bestSemanticDistance) {
-			NS_LOG_INFO(GetNode()->GetObject<Ipv4>()->GetAddress(1, 0).GetLocal() << " -> only adding responses with semantic distance >= " << bestSemanticDistance);
-			break;
+		if(bestResponse.GetOfferedService().semanticDistance > bestSemanticDistance) {
+			NS_LOG_INFO(GetNode()->GetObject<Ipv4>()->GetAddress(1, 0).GetLocal() << " -> only adding responses with semantic distance <= " << bestSemanticDistance);
+			responses = DeleteElement(responses, bestResponse);
+			continue;
 		}
 		schedule.push_back(bestResponse);
 		NS_LOG_DEBUG(GetNode()->GetObject<Ipv4>()->GetAddress(1, 0).GetLocal() << " -> added response to schedule: " << bestResponse);
@@ -87,7 +88,6 @@ void ScheduleApplication::CreateSchedule(std::list<SearchResponseHeader> respons
 
 std::list<SearchResponseHeader> ScheduleApplication::DeleteElement(std::list<SearchResponseHeader> list, SearchResponseHeader element) {
 	NS_LOG_FUNCTION(&list << element);
-	std::list<SearchResponseHeader>::iterator i;
 	for(std::list<SearchResponseHeader>::iterator i = list.begin(); i != list.end(); i++) {
 		if((*i).GetRequestTimestamp() == element.GetRequestTimestamp() && (*i).GetResponseAddress() == element.GetResponseAddress()) {
 			NS_LOG_DEBUG("Deleting response from list: " << (*i));
