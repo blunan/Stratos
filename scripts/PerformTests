@@ -23,9 +23,11 @@ export NS_LOG=
 #Full Stratos logging
 #export NS_LOG="SearchApplication:ServiceApplication:ScheduleApplication:NeighborhoodApplication:OntologyApplication:PositionApplication:ResultsApplication:RouteApplication:Stratos"
 
-# Configure and complite first the program to avoid counting compilation time as running time
 ./waf clean
-CXXFLAGS="-O3 -w" ./waf -d optimized configure --enable-static
+# Configure and complite first the program to avoid counting compilation time as running time
+# Use debug if you want to see log output
+#CXXFLAGS="-O3 -w" ./waf configure --build-profile=debug --enable-static
+CXXFLAGS="-O3 -w" ./waf configure --build-profile=optimized --enable-static
 
 # Build once
 ./waf --run stratos_distributed
