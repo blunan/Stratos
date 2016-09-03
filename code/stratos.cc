@@ -24,7 +24,7 @@ Stratos::Stratos(int argc, char *argv[]) {
 	MAX_SCHEDULE_SIZE = 3; // 1, 2, 3*, 4, 5
 	NUMBER_OF_MOBILE_NODES = 50; //0, 25, 50*, 100
 	NUMBER_OF_REQUESTER_NODES = 4; //1, 2, 4*, 8, 16, 24, 32
-	NUMBER_OF_PACKETS_TO_SEND = 10; //10*, 20, 40, 60
+	NUMBER_OF_PACKETS_TO_SEND = 20; //10, 20*, 40, 60
 	NUMBER_OF_SERVICES_OFFERED = 2; //1, 2*, 4, 8
 
 	NS_LOG_INFO("Parsing argument values if any");
