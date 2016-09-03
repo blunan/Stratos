@@ -13,7 +13,12 @@ TypeId ScheduleApplication::GetTypeId() {
 	NS_LOG_FUNCTION_NOARGS();
 	static TypeId typeId = TypeId("ScheduleApplication")
 		.SetParent<Application>()
-		.AddConstructor<ScheduleApplication>();
+		.AddConstructor<ScheduleApplication>()
+		.AddAttribute("nSchedule",
+						"Max number of nodes in a schedule.",
+						IntegerValue(3),
+						MakeIntegerAccessor(&ScheduleApplication::MAX_SCHEDULE_SIZE),
+						MakeIntegerChecker<int>());
 	return typeId;
 }
 
@@ -83,7 +88,7 @@ void ScheduleApplication::CreateSchedule(std::list<SearchResponseHeader> respons
 		responses = DeleteElement(responses, bestResponse);
 		scheduleSize++;
 	}
-	NS_LOG_DEBUG(GetNode()->GetObject<Ipv4>()->GetAddress(1, 0).GetLocal() << " -> schedule size is " << scheduleSize);
+	NS_LOG_DEBUG(GetNode()->GetObject<Ipv4>()->GetAddress(1, 0).GetLocal() << " -> schedule size is " << scheduleSize << " of " << MAX_SCHEDULE_SIZE);
 }
 
 std::list<SearchResponseHeader> ScheduleApplication::DeleteElement(std::list<SearchResponseHeader> list, SearchResponseHeader element) {
