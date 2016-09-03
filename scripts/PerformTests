@@ -32,6 +32,12 @@ CXXFLAGS="-O3 -w" ./waf -d optimized configure --enable-static
 
 for i in {1..100}
 do
+	./waf --run "stratos_distributed --nSchedule=1" >> stratos/distributed_schedule_1.txt
+	./waf --run "stratos_distributed --nSchedule=2" >> stratos/distributed_schedule_2.txt
+	./waf --run "stratos_distributed --nSchedule=3" >> stratos/distributed_schedule_3.txt
+	./waf --run "stratos_distributed --nSchedule=4" >> stratos/distributed_schedule_4.txt
+	./waf --run "stratos_distributed --nSchedule=5" >> stratos/distributed_schedule_5.txt
+
 	./waf --run "stratos_distributed --nMobile=0" >> stratos/distributed_mobile_0.txt
 	./waf --run "stratos_distributed --nMobile=25" >> stratos/distributed_mobile_25.txt
 	./waf --run "stratos_distributed --nMobile=50" >> stratos/distributed_mobile_50.txt
