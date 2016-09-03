@@ -28,6 +28,7 @@ ScheduleApplication::ScheduleApplication() {
 
 void ScheduleApplication::DoInitialize() {
 	NS_LOG_FUNCTION(this);
+	schedule.clear();
 	serviceManager = DynamicCast<ServiceApplication>(GetNode()->GetApplication(5));
 	resultsManager = DynamicCast<ResultsApplication>(GetNode()->GetApplication(7));
 	Application::DoInitialize();
@@ -39,17 +40,16 @@ ScheduleApplication::~ScheduleApplication() {
 
 void ScheduleApplication::DoDispose() {
 	NS_LOG_FUNCTION(this);
+	schedule.clear();
 	Application::DoDispose();
 }
 
 void ScheduleApplication::StartApplication() {
 	NS_LOG_FUNCTION(this);
-	schedule.clear();
 }
 
 void ScheduleApplication::StopApplication() {
 	NS_LOG_FUNCTION(this);
-	schedule.clear();
 }
 
 void ScheduleApplication::ExecuteSchedule() {
@@ -61,9 +61,9 @@ void ScheduleApplication::ExecuteSchedule() {
 	NS_LOG_DEBUG(GetNode()->GetObject<Ipv4>()->GetAddress(1, 0).GetLocal() << " -> service packages per node in schedule are " << packetsByNode);
 	int requestExtraPackets = serviceManager->NUMBER_OF_PACKETS_TO_SEND % schedule.size();
 	NS_LOG_DEBUG(GetNode()->GetObject<Ipv4>()->GetAddress(1, 0).GetLocal() << " -> there are " << requestExtraPackets << " packets that will be added to this request to fill the " << serviceManager->NUMBER_OF_PACKETS_TO_SEND << " total packages needed");
+	schedule.pop_front();
 	serviceManager->SetCallback(MakeCallback(&ScheduleApplication::ContinueSchedule, this));
 	serviceManager->CreateAndSendRequest(node.GetResponseAddress(), node.GetOfferedService().service,packetsByNode + requestExtraPackets);
-	schedule.pop_front();
 }
 
 void ScheduleApplication::CreateSchedule(std::list<SearchResponseHeader> responses) {
@@ -109,8 +109,8 @@ void ScheduleApplication::ContinueSchedule() {
 	if(!schedule.empty()) {
 		SearchResponseHeader node = schedule.front();
 		NS_LOG_DEBUG(GetNode()->GetObject<Ipv4>()->GetAddress(1, 0).GetLocal() << " -> next node in schedule is " << node);
-		serviceManager->CreateAndSendRequest(node.GetResponseAddress(), node.GetOfferedService().service, packetsByNode);
 		schedule.pop_front();
+		serviceManager->CreateAndSendRequest(node.GetResponseAddress(), node.GetOfferedService().service, packetsByNode);
 		return;
 	}
 	NS_LOG_DEBUG(GetNode()->GetObject<Ipv4>()->GetAddress(1, 0).GetLocal() << " -> no more nodes in schedule");
