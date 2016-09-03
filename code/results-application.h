@@ -29,6 +29,7 @@ class ResultsApplication : public Application {
 
 	private:
 		bool active;
+		int scheduleSize;
 		int foundSomeone;
 		uint localAddress;
 		double requestTime;
@@ -45,6 +46,7 @@ class ResultsApplication : public Application {
 	public:
 		void Activate();
 		void AddPacket(double receiveTime);
+		void SetScheduleSize(int scheduleSize);
 		void SetRequestTime(double requestTime);
 		void SetRequestDistance(double requestDistance);
 		void SetRequestPosition(POSITION requestPosition);

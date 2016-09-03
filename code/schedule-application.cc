@@ -88,6 +88,7 @@ void ScheduleApplication::CreateSchedule(std::list<SearchResponseHeader> respons
 		responses = DeleteElement(responses, bestResponse);
 		scheduleSize++;
 	}
+	resultsManager->SetScheduleSize(scheduleSize);
 	NS_LOG_DEBUG(GetNode()->GetObject<Ipv4>()->GetAddress(1, 0).GetLocal() << " -> schedule size is " << scheduleSize << " of " << MAX_SCHEDULE_SIZE);
 }
 
