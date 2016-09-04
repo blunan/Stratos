@@ -25,7 +25,7 @@ def CalculateStatics(resultsFile, nPackets = 20, nRequesters = 4) :
 	packetsSum = 0 #
 	deviations = range(6)
 	avgScheduleSizes = []
-	totavgScheduleSizes = 0
+	totAvgScheduleSizes = 0
 	avgControlOverheads = []
 	avgFoundPercentages = []
 	totAvgControlOverhead = 0
@@ -59,7 +59,7 @@ def CalculateStatics(resultsFile, nPackets = 20, nRequesters = 4) :
 				totAvgSuccessPercentage += aux
 				avgSuccessPercentages.append(aux)
 				if(nScheduleSize > 0) :
-					totavgScheduleSizes += nScheduleSize
+					totAvgScheduleSizes += nScheduleSize
 					avgScheduleSizes.append(nScheduleSize)
 					nScheduleSize = 0
 				nTimes = 0
@@ -78,7 +78,7 @@ def CalculateStatics(resultsFile, nPackets = 20, nRequesters = 4) :
 				nScheduleSize = int(values[3]) # Size of schedule
 
 	totAvgTime = totAvgTime / len(avgTimes);
-	totavgScheduleSizes = totavgScheduleSizes / len(avgScheduleSizes)
+	totAvgScheduleSizes = totAvgScheduleSizes / len(avgScheduleSizes)
 	totAvgFoundPercentage = totAvgFoundPercentage / len(avgFoundPercentages)
 	totAvgControlOverhead =  totAvgControlOverhead / len(avgControlOverheads)
 	totAvgPacketsPercentage = totAvgPacketsPercentage / len(avgPacketsPercentages)
@@ -89,7 +89,7 @@ def CalculateStatics(resultsFile, nPackets = 20, nRequesters = 4) :
 	deviations[1] = CalculateStandardDeviation(avgSuccessPercentages,totAvgSuccessPercentage)
 	deviations[2] = CalculateStandardDeviation(avgFoundPercentages, totAvgFoundPercentage)
 	deviations[3] = CalculateStandardDeviation(avgPacketsPercentages, totAvgPacketsPercentage)
-	deviations[4] = CalculateStandardDeviation(avgScheduleSizes, totavgScheduleSizes)
+	deviations[4] = CalculateStandardDeviation(avgScheduleSizes, totAvgScheduleSizes)
 	deviations[5] = CalculateStandardDeviation(avgControlOverheads, totAvgControlOverhead)
 
 	# Calculate a 1 - alpha = 95% confidence interval, this means P(-1.96 < z < 1.96) = 0.95
@@ -101,7 +101,7 @@ def CalculateStatics(resultsFile, nPackets = 20, nRequesters = 4) :
 	confidenceIntervals[5] = 1.96 * (deviations[4] / math.sqrt(len(avgControlOverheads)))
 
 	print("%.4f|%.4f|%.4f|%.4f|%.4f|%.4f" % (confidenceIntervals[0], confidenceIntervals[1], confidenceIntervals[2], confidenceIntervals[3], confidenceIntervals[4], confidenceIntervals[5]), file=staticsFile)
-	print("%.4f|%.4f|%.4f|%.4f|%d|%.4f" % (totAvgTime, totAvgSuccessPercentage, totAvgFoundPercentage, totAvgPacketsPercentage, totavgScheduleSizes, totAvgControlOverhead), file=staticsFile)
+	print("%.4f|%.4f|%.4f|%.4f|%d|%.4f" % (totAvgTime, totAvgSuccessPercentage, totAvgFoundPercentage, totAvgPacketsPercentage, totAvgScheduleSizes, totAvgControlOverhead), file=staticsFile)
 
 staticsFile = open("stratos/distributed_statics.txt", "w+")
 CalculateStatics("stratos/distributed_schedule_1.txt")
