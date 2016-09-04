@@ -7,10 +7,11 @@ else
 	cd ~/ns-3
 fi
 
-indexes[0]="0 25 50 100"
-indexes[1]="1 2 4 8 16 24 32"
-indexes[2]="1 2 4 8"
-indexes[3]="10 20 40 60"
+indexes[0]="1 2 3 4 5"
+indexes[1]="0 25 50 100"
+indexes[2]="1 2 4 8 16 24 32"
+indexes[3]="1 2 4 8"
+indexes[4]="10 20 40 60"
 
 ReadAndExport() {
 	i=0
