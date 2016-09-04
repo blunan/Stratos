@@ -65,7 +65,7 @@ void ResultsApplication::StopApplication() {
 				break;
 			}
 		}
-		NS_LOG_DEBUG(Ipv4Address(localAddress) << " -> results: \n\t elapsedTimeFromRequestResponseToFirstServiceResponse = " << elapsedTimeFromRequestResponseToFirstServiceResponse << "\n\t success = " << success << "\n\t foundSomeone = " << foundSomeone << "\n\t nPackets = " << nPackets);
+		NS_LOG_DEBUG(Ipv4Address(localAddress) << " -> results: \n\t elapsedTimeFromRequestResponseToFirstServiceResponse = " << elapsedTimeFromRequestResponseToFirstServiceResponse << "\n\t success = " << success << "\n\t foundSomeone = " << foundSomeone << "\n\t scheduleSize = " << scheduleSize << "\n\t nPackets = " << nPackets);
 		std::cout << elapsedTimeFromRequestResponseToFirstServiceResponse << "|" << success << "|" << foundSomeone << "|" << scheduleSize << "|" << nPackets << std::endl;
 	}
 }
