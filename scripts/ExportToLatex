@@ -24,7 +24,7 @@ ReadAndExport() {
 		if [ -z "$line" ]
 		then
 			declare -a index=(${indexes[k]})
-			for j in {0..4}
+			for j in {0..5}
 			do
 				for i in ${!values[*]}
 				do
