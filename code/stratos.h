@@ -14,6 +14,7 @@ class Stratos {
 		NodeContainer staticNodes;
 		NetDeviceContainer wifiDevices;
 
+		int MAX_SCHEDULE_SIZE;
 		int NUMBER_OF_MOBILE_NODES;
 		int NUMBER_OF_PACKETS_TO_SEND;
 		int NUMBER_OF_REQUESTER_NODES;

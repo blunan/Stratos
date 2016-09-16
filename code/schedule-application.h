@@ -17,7 +17,7 @@ class ScheduleApplication : public Application {
 
 	public:
 		static TypeId GetTypeId();
-		
+
 		ScheduleApplication();
 		~ScheduleApplication();
 
@@ -32,6 +32,7 @@ class ScheduleApplication : public Application {
 	private:
 		int scheduleSize;
 		int packetsByNode;
+		int MAX_SCHEDULE_SIZE;
 		Ptr<ResultsApplication> resultsManager;
 		Ptr<ServiceApplication> serviceManager;
 		std::list<SearchResponseHeader> schedule;

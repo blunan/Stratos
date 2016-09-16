@@ -65,8 +65,8 @@ void ResultsApplication::StopApplication() {
 				break;
 			}
 		}
-		NS_LOG_DEBUG(Ipv4Address(localAddress) << " -> results: \n\t elapsedTimeFromRequestResponseToFirstServiceResponse = " << elapsedTimeFromRequestResponseToFirstServiceResponse << "\n\t success = " << success << "\n\t foundSomeone = " << foundSomeone << "\n\t nPackets = " << nPackets);
-		std::cout << elapsedTimeFromRequestResponseToFirstServiceResponse << "|" << success << "|" << foundSomeone << "|" << nPackets << std::endl;
+		NS_LOG_DEBUG(Ipv4Address(localAddress) << " -> results: \n\t elapsedTimeFromRequestResponseToFirstServiceResponse = " << elapsedTimeFromRequestResponseToFirstServiceResponse << "\n\t success = " << success << "\n\t foundSomeone = " << foundSomeone << "\n\t scheduleSize = " << scheduleSize << "\n\t nPackets = " << nPackets);
+		std::cout << elapsedTimeFromRequestResponseToFirstServiceResponse << "|" << success << "|" << foundSomeone << "|" << scheduleSize << "|" << nPackets << std::endl;
 	}
 }
 
@@ -82,6 +82,12 @@ void ResultsApplication::AddPacket(double receiveTime) {
 	packetsTimes.push_back(receiveTime);
 	pthread_mutex_unlock(&mutex);
 	NS_LOG_DEBUG(Ipv4Address(localAddress) << " -> received service packet at " << receiveTime);
+}
+
+void ResultsApplication::SetScheduleSize(int scheduleSize) {
+	NS_LOG_FUNCTION(this);
+	this->scheduleSize = scheduleSize;
+	NS_LOG_DEBUG(Ipv4Address(localAddress) << " -> schedule size is " << scheduleSize);
 }
 
 void ResultsApplication::SetRequestTime(double requestTime) {
