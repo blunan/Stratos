@@ -97,8 +97,8 @@ def CalculateStatics(resultsFile, nPackets = 20, nRequesters = 4) :
 	confidenceIntervals[1] = 1.96 * (deviations[1] / math.sqrt(len(avgSuccessPercentages)))
 	confidenceIntervals[2] = 1.96 * (deviations[2] / math.sqrt(len(avgFoundPercentages)))
 	confidenceIntervals[3] = 1.96 * (deviations[3] / math.sqrt(len(avgPacketsPercentages)))
-	confidenceIntervals[4] = 1.96 * (deviations[5] / math.sqrt(len(avgScheduleSizes)))
-	confidenceIntervals[5] = 1.96 * (deviations[4] / math.sqrt(len(avgControlOverheads)))
+	confidenceIntervals[4] = 1.96 * (deviations[4] / math.sqrt(len(avgScheduleSizes)))
+	confidenceIntervals[5] = 1.96 * (deviations[5] / math.sqrt(len(avgControlOverheads)))
 
 	print("%.4f|%.4f|%.4f|%.4f|%.4f|%.4f" % (confidenceIntervals[0], confidenceIntervals[1], confidenceIntervals[2], confidenceIntervals[3], confidenceIntervals[4], confidenceIntervals[5]), file=staticsFile)
 	print("%.4f|%.4f|%.4f|%.4f|%d|%.4f" % (totAvgTime, totAvgSuccessPercentage, totAvgFoundPercentage, totAvgPacketsPercentage, totAvgScheduleSizes, totAvgControlOverhead), file=staticsFile)
